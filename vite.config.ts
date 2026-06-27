@@ -7,12 +7,14 @@ export default defineConfig(({ mode }) => {
   // loadEnv reads .env files; process.env covers shell-level vars (e.g. RENDER_MODE)
   const env = loadEnv(mode, process.cwd(), "");
 
-  const siteName = env.VITE_SITE_NAME ?? "thenews";
-  const siteShortName = env.VITE_SITE_SHORT_NAME ?? siteName;
+  const siteName = env.VITE_SITE_NAME || "thenews";
+  const siteShortName = env.VITE_SITE_SHORT_NAME || siteName;
   const siteDescription =
-    env.VITE_SITE_DESCRIPTION ?? "the news — design engineer case";
-  const themeColor = env.VITE_THEME_COLOR ?? "#000000";
-  const bgColor = env.VITE_BG_COLOR ?? "#ffffff";
+    env.VITE_SITE_DESCRIPTION || "the news — design engineer case";
+  // dotenv parses `#` as inline comment, so hex colors must be quoted in .env.
+  // Use `||` (not `??`) so an accidentally unquoted empty string still falls back.
+  const themeColor = env.VITE_THEME_COLOR || "#000000";
+  const bgColor = env.VITE_BG_COLOR || "#ffffff";
 
   // RENDER_MODE from shell env (not in .env files, set per build script)
   const renderMode = process.env.RENDER_MODE ?? "ssr";
@@ -22,6 +24,10 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       reactRouter(),
       VitePWA({
+        // React Router v7 uses the Vite Environment API with per-environment
+        // outDirs (build/client, build/server). vite-plugin-pwa's own outDir
+        // falls back to the legacy `dist` default — override it explicitly.
+        outDir: "build/client",
         // SW is registered manually in app/entry.client.tsx (production only).
         // injectRegister: null avoids conflicts with React Router v7's SSR HTML.
         injectRegister: null,
