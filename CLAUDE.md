@@ -128,22 +128,33 @@ Dynamic names like cookie keys are composed from `appSlug` — renaming the app 
 
 All types are declared in `env.d.ts` (`ImportMetaEnv` interface).
 
-### Dark/light theme: ThemeProvider (shadcn pattern) + SSR cookie
+**Hex color values must be quoted in `.env`:** dotenv treats `#` as an inline comment character. `VITE_THEME_COLOR=#000000` is parsed as an empty string. Always quote hex values: `VITE_THEME_COLOR="#000000"`. Use `||` (not `??`) as fallback in `vite.config.ts` — `??` does not catch empty strings, only `null`/`undefined`.
 
-Theme follows the shadcn/ui component pattern: a `ThemeProvider` component in `app/components/theme-provider.tsx` with a `useTheme()` hook. The only difference from the shadcn Vite docs is persistence: **cookie instead of `localStorage`** — cookies are sent by the browser on every request, so the server can render the correct `<html class>` before any JS runs.
+### Dark/light theme: ThemeProvider (shadcn pattern) + cookie
+
+Theme follows the shadcn/ui component pattern: a `ThemeProvider` component in `app/components/theme-provider.tsx` with a `useTheme()` hook. Persistence uses **`document.cookie`** — not `localStorage` (no SSR access) and not a server action (incompatible with SPA/SSG render modes).
+
+**Why `document.cookie` over a server `Set-Cookie` action:**
+React Router v7 SPA mode forbids `action` exports on route files — there is no server to handle them. SSG mode builds pass but the action 404s at runtime (static files, no server). `document.cookie` writes land in HTTP headers on every subsequent request, so the SSR server reads the cookie correctly too. It works identically across all three render modes.
 
 **Architecture:**
-1. Root `loader` reads the theme cookie → returns `{ theme }` (`'light'` or `'dark'`).
-2. `Layout` sets `<html className={theme}>` server-side — correct class in initial HTML, no flash for returning users.
-3. `App` (default export in `root.tsx`) wraps `<Outlet>` with `<ThemeProvider serverTheme={theme}>`.
-4. `ThemeProvider` initializes `useState(serverTheme)` — matches server-rendered HTML exactly (no hydration mismatch).
-5. `ThemeProvider`'s `useEffect` syncs `document.documentElement.classList` on every state change — same technique as shadcn Vite docs.
-6. `setTheme(next)` from `useTheme()` updates state immediately (one click, instant visual) AND posts to `/action/theme` via `useFetcher` to persist the cookie.
-7. `action.theme.tsx` returns `new Response(null, { headers: { 'Set-Cookie': ... } })` — `Set-Cookie` header in the HTTP response; browser stores the cookie.
+1. Root `loader` reads the theme cookie via `parseCookie()` → returns `{ theme, themeIsExplicit, locale }`.
+   - `themeIsExplicit = true` when the cookie is present (returning user).
+   - `themeIsExplicit = false` on first visit (no cookie yet).
+2. `Layout` sets `<html suppressHydrationWarning>` and injects a flash-prevention inline `<script>` in `<head>` — runs synchronously before React hydrates, reads the cookie or `prefers-color-scheme`, and adds the correct class to `<html>`. Zero flash for both returning users and first-time dark-OS visitors.
+3. `App` (default export in `root.tsx`) wraps `<Outlet>` with `<ThemeProvider serverTheme={theme} themeIsExplicit={themeIsExplicit}>`.
+4. `ThemeProvider` initializes `useState(serverTheme)` — matches the server-rendered HTML (no hydration mismatch). On mount, if `themeIsExplicit` is false, detects `prefers-color-scheme` and writes the cookie so subsequent server renders get the correct class without a flash.
+5. `ThemeProvider`'s `useEffect` syncs `document.documentElement.classList` on every state change.
+6. `handleSetTheme(next)` from `useTheme()` updates state immediately AND writes `document.cookie` — one call, all render modes.
 
-**Cookie utilities:** `app/cookies.server.ts` uses React Router's `createCookie` — server-only, never imported in client modules.
+**Cookie write (ThemeProvider):**
+```ts
+document.cookie = `${config.themeCookieKey}=${theme}; Path=/; Max-Age=${365 * 24 * 60 * 60}; SameSite=Lax`
+```
 
 **Cookie key:** `config.themeCookieKey` → `${appSlug}-theme` (e.g. `thenews-theme`). Overridable via `VITE_THEME_COOKIE_KEY` env var.
+
+**`app/cookies.server.ts`:** Utility kept for future server-side cookie needs (e.g. i18n, auth). Not used for theme persistence since switching to `document.cookie`.
 
 **RTL direction:** `Layout` also reads `locale` from the loader and sets `<html dir="rtl">` when `locale === 'ar-SA'`. When the user switches language client-side (via `i18n.changeLanguage()`), calling `revalidate()` from `useRevalidator()` tells React Router to re-run the loaders — the root loader reads the new i18n cookie and returns the updated locale, so `<html lang>` and `<html dir>` update in the same navigation cycle.
 
@@ -159,6 +170,7 @@ PWA is implemented via `vite-plugin-pwa` + `@vite-pwa/assets-generator`:
 **Manifest:** Generated dynamically from env vars at build/dev time via `loadEnv()` in `vite.config.ts`. The manifest file is `manifest.webmanifest` (served at `/manifest.webmanifest`). Referenced in `root.links()`.
 
 **Service worker strategy:**
+- `outDir: 'build/client'` — **must be set explicitly.** React Router v7 uses the Vite Environment API, which configures a separate outDir per environment (`build/client`, `build/server`). vite-plugin-pwa does not pick up per-environment outDirs and falls back to Vite's root default (`dist/`), generating `dist/sw.js` instead of `build/client/sw.js`. The explicit `outDir` overrides this.
 - `registerType: 'autoUpdate'` — SW updates automatically in background.
 - `injectRegister: null` — no automatic HTML injection (incompatible with React Router v7's SSR-generated HTML). Instead, `app/entry.client.tsx` calls `registerSW({ immediate: false })` from `virtual:pwa-register`, guarded by `import.meta.env.PROD`.
 - `devOptions: { enabled: false }` — **service workers must never run in development.** In dev mode there is no build output, so Workbox glob patterns match nothing (causes "Couldn't find configuration for precaching or runtime caching" error) and the SW would intercept HMR traffic.
@@ -166,6 +178,8 @@ PWA is implemented via `vite-plugin-pwa` + `@vite-pwa/assets-generator`:
 - Workbox precaches all static assets (`js`, `css`, `ico`, `png`, `svg`, `woff`, `woff2`).
 - `navigateFallback: null` in SSR mode — HTML is always fetched from the server. Change to `navigateFallback: '/index.html'` for SPA/SSG mode.
 - `skipWaiting: true` + `clientsClaim: true` — new SW takes control immediately after `autoUpdate`.
+
+**`dist/` in `.gitignore` and ESLint ignores:** Even with `outDir: 'build/client'`, Workbox's internal log line still says "files generated: dist/sw.js" (its own temp path). The `dist/` folder must be in both `.gitignore` and the `ignores` array in `eslint.config.js` to prevent ESLint from linting service worker bundles.
 
 **Icon generation:** `pwa-assets.config.ts` configures `@vite-pwa/assets-generator` with `minimal2023Preset`. Run `npm run pwa:generate` to regenerate all icons from `public/favicon.svg`. After regenerating, update icon references in `vite.config.ts` (manifest.icons) and `app/root.tsx` (links function).
 
