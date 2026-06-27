@@ -1,5 +1,5 @@
 import { createContext, use, useEffect, useState } from "react"
-import { useFetcher } from "react-router"
+import { config } from "~/config"
 
 export type Theme = "dark" | "light"
 
@@ -13,6 +13,12 @@ const ThemeProviderContext = createContext<ThemeProviderState>({
   setTheme: () => null,
 })
 
+const COOKIE_MAX_AGE = 365 * 24 * 60 * 60
+
+function writeCookie(theme: Theme) {
+  document.cookie = `${config.themeCookieKey}=${theme}; Path=/; Max-Age=${COOKIE_MAX_AGE}; SameSite=Lax`
+}
+
 export function ThemeProvider({
   children,
   serverTheme,
@@ -23,14 +29,6 @@ export function ThemeProvider({
   themeIsExplicit: boolean
 }) {
   const [theme, setTheme] = useState<Theme>(serverTheme)
-  const fetcher = useFetcher()
-
-  const persistTheme = (next: Theme) => {
-    fetcher.submit(
-      { theme: next },
-      { method: "POST", action: "/action/theme" }
-    )
-  }
 
   // On mount: if no explicit cookie was set, detect system preference and persist it.
   // After this runs once, every subsequent visit has a cookie and the server
@@ -44,7 +42,7 @@ export function ThemeProvider({
         // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/set-state-in-effect -- syncing to prefers-color-scheme on mount; SSR-safe: server+client both render serverTheme first, then this corrects to system on first paint
         setTheme(system)
       }
-      persistTheme(system)
+      writeCookie(system)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps, @eslint-react/exhaustive-deps -- mount-only; re-running on dep change would fight the persisted cookie
   }, [])
@@ -58,7 +56,7 @@ export function ThemeProvider({
 
   const handleSetTheme = (next: Theme) => {
     setTheme(next)
-    persistTheme(next)
+    writeCookie(next)
   }
 
   return (

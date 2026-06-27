@@ -7,6 +7,7 @@ export default tseslint.config(
   {
     ignores: [
       'build/',
+      'dist/',
       '.react-router/',
       'node_modules/',
       'untrack/',
