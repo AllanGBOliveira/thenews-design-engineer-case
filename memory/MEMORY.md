@@ -1,2 +1,5 @@
 - [Language rule](feedback_language.md) — all file content must be in English, never PT-BR
 - [SCSS + CSS tokens](feedback_scss_tokens.md) — SCSS for syntax only; tokens always as CSS custom properties, never SCSS variables
+- [Project architecture](project_architecture.md) — shadcn/ui + Tailwind v4 + react-i18next + cookie-based theme/i18n, deadline 2026-06-29
+- [Theme architecture](feedback_theme_architecture.md) — theme state in Layout (not DOM effect hook) to avoid two-click bug during revalidation
+- [Locale codes](feedback_locale_codes.md) — always language-REGION (pt-BR, en-US, es-ES, ar-SA); never bare codes

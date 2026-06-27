@@ -34,6 +34,18 @@ jobs:
       - run: npm run lint
       - run: npm run lint:styles
 
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run typecheck
+
   test:
     name: Test
     runs-on: ubuntu-latest

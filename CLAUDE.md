@@ -10,11 +10,14 @@ This is the bonus deliverable for the **the news** (thenewscc.com.br) selection 
 
 The challenge requires redesigning at least 2 screens of the app and optionally implementing them in React with responsive mobile layout, deployed to a public URL.
 
-**Chosen screens:**
-- **Habits** — calendar + streak gamification system (retention focus)
-- **Books** — reading library and progress tracking (engagement focus)
+**Primary screens (core deliverable):**
+- **Home / Feed** — edition listing with category filtering, replacing the current flow that drops the user directly into a post slug with no content discovery layer
+- **Habits** — calendar + streak gamification system, expanded with multiple habit types beyond reading
 
-These two were selected because they directly attack the two core product metrics of a media startup: daily retention (Habits/streak) and content engagement (Books).
+**Stretch screen (if time allows):**
+- **Books** — natural extension of the expanded Habits screen; mentioned as a next step in the design decisions document but not a committed deliverable
+
+The Home and Habits screens were selected because they attack the two core product metrics of a media startup: content engagement (Home/discovery) and daily retention (Habits/streak). Books is documented as the logical product evolution, not a fallback.
 
 ---
 
@@ -23,8 +26,29 @@ These two were selected because they directly attack the two core product metric
 ### Framework: React Router v7 (not Next.js)
 The deliverable simulates a mobile app interface. Next.js adds SSR complexity that is irrelevant here — native and hybrid apps (like the news's likely React Native stack) run entirely client-side. React Router v7 + Vite keeps the project surgical: clean `components/`, clear styling tokens, zero SSR noise for the evaluator.
 
-### Rendering: SPA (not SSG)
-The Habits and Books screens are highly dynamic — the calendar marks days in real time, streak counters update on interaction, book progress is user-specific. SSG pre-renders at build time and cannot predict per-user state. SPA with client-side rendering mirrors how a React Native app actually behaves.
+### Rendering modes: SSR / SPA / SSG (switchable via RENDER_MODE)
+
+All three rendering modes are supported from a single codebase. The active mode is controlled by the `RENDER_MODE` shell env var set at build time — no source code changes needed.
+
+| Mode | `RENDER_MODE` | Build script | Serve |
+|------|--------------|-------------|-------|
+| SSR | `ssr` (default) | `npm run build:ssr` | `npm start` (Node.js) |
+| SPA | `spa` | `npm run build:spa` | Static server / CDN |
+| SSG | `ssg` | `npm run build:ssg` | Static server / CDN |
+
+**How it works:**
+- `react-router.config.ts` reads `process.env.RENDER_MODE` → sets `ssr: false` for SPA, enables `prerender` for SSG.
+- `vite.config.ts` reads `process.env.RENDER_MODE` → sets Workbox `navigateFallback: null` for SSR (navigation hits the server), `navigateFallback: '/index.html'` for SPA/SSG (SW handles navigation offline).
+
+**Deploy scripts (like Nuxt's generate/build):**
+- `npm run deploy` → lint:fix + styles:fix + pwa:generate + typecheck + SSR build
+- `npm run deploy:spa` → same pipeline + SPA build
+- `npm run deploy:ssg` → same pipeline + SSG build
+- `npm run preview` → `serve build/client -s` for local SPA/SSG preview
+
+**SSG routes (`react-router.config.ts`):** `prerender` returns `['/', '/habits']` in SSG mode — update this list when new routes are added.
+
+**RENDER_MODE is NOT in `.env`** — it's a shell-level build variable, not a runtime config. Setting it in `.env` would expose it to Vite's client bundle.
 
 ### Styling: Tailwind CSS + SCSS with CSS custom properties
 SCSS is used for its syntax benefits (nesting, partials, `@use`). Design tokens are always defined as **CSS custom properties** (`--token-name`), never as SCSS variables (`$var`). This keeps tokens consumable by any part of the stack — JavaScript, Tailwind, third-party components — without being locked to the SCSS preprocessor.
@@ -41,6 +65,128 @@ The app uses `@expo/vector-icons` with primarily **MaterialCommunityIcons** and 
 ### Components: interaction states over static screens
 Each view must demonstrate at least one interaction state beyond the default. Specific redesign decisions are TBD once visual research and benchmarking are complete.
 
+### i18n: react-i18next with cookie + browser language detection (SSR-aligned)
+Internationalization uses `react-i18next` + `i18next` + `i18next-browser-languagedetector`.
+
+**Supported languages:** `pt-BR` (Portuguese), `en-US` (English), `es-ES` (Spanish), `ar-SA` (Arabic — RTL).
+
+**Locale code convention — `language-REGION` pattern:**
+All four supported locales follow the `language-REGION` BCP 47 format consistently:
+- `pt-BR` — Brazilian Portuguese (distinct from `pt-PT`)
+- `en-US` — American English (distinct from `en-GB`)
+- `es-ES` — Spanish (covers all variants: `es-MX`, `es-AR`, etc. via `convertDetectedLanguage`)
+- `ar-SA` — Arabic (covers all variants: `ar-EG`, `ar-MA`, etc. via `convertDetectedLanguage`)
+
+Using a consistent code style avoids mixing bare language codes (`es`, `ar`) with region-qualified codes (`pt-BR`, `en-US`). The `convertDetectedLanguage` function in the detection config normalizes any browser locale to the four supported codes — `es-MX` becomes `es-ES`, `ar-EG` becomes `ar-SA`, etc. This makes regional variant mapping explicit and centralized.
+
+**Detection order:** cookie first, then browser language (`navigator`). No URL prefix — simpler routing, no SSR complications.
+
+**`convertDetectedLanguage`:** Normalizes any browser locale to one of the four supported codes (applied client-side by `i18next-browser-languagedetector`, mirrored on the server by `parseAcceptLanguage`):
+```ts
+convertDetectedLanguage: (lng: string) => {
+  const l = lng.toLowerCase()
+  if (l.startsWith('ar')) return 'ar-SA'
+  if (l.startsWith('es')) return 'es-ES'
+  if (l.startsWith('en')) return 'en-US'
+  if (l.startsWith('pt')) return 'pt-BR'
+  return 'pt-BR'
+}
+```
+
+**SSR alignment — the critical fix:** i18n runs as a shared singleton on the server. Two fixes prevent hydration mismatches:
+
+1. **Singleton alignment:** root `loader` reads the locale cookie and calls `await i18n.changeLanguage(locale)` before render.
+2. **First-visit alignment:** root `loader` parses the `Accept-Language` HTTP header via `parseAcceptLanguage()` when no cookie is set — this mirrors exactly what `convertDetectedLanguage` resolves from `navigator.language` on the client.
+
+**`<html>` attributes:** The root `Layout` sets both `lang` (BCP 47) and `dir` from the loader data:
+- `lang`: BCP 47 code per locale (`pt-BR`, `en`, `es`, `ar`)
+- `dir`: `rtl` when locale is `ar-SA`, `ltr` for all others
+
+**Locale files:** `app/i18n/locales/{pt-BR,en-US,es-ES,ar-SA}.json`
+
+**Why no URL prefix:** The URL prefix approach requires duplicate route definitions in React Router v7 and adds routing complexity with no tangible benefit for a client-side app that mimics native/hybrid behavior.
+
+### Environment variables: ao.dev naming pattern
+All client-side env vars are prefixed `VITE_`. A `config.ts` module imports them, applies fallbacks, and derives `appSlug` from `VITE_SITE_NAME`:
+
+```ts
+export const appSlug = siteName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+```
+
+Dynamic names like cookie keys are composed from `appSlug` — renaming the app in `.env` cascades everywhere automatically. The `vite.config.ts` uses Vite's `loadEnv()` to read env vars at build/dev time so the PWA manifest is also dynamically generated from env vars.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `VITE_SITE_NAME` | `thenews` | Derives `appSlug`; used in PWA manifest `name` |
+| `VITE_SITE_URL` | `https://thenewscc.com.br` | Canonical URL for SEO |
+| `VITE_SITE_SHORT_NAME` | `thenews` | PWA homescreen short name |
+| `VITE_SITE_DESCRIPTION` | `the news — design engineer case` | Meta description + PWA description |
+| `VITE_THEME_COLOR` | `#000000` | Browser bar / PWA theme color |
+| `VITE_BG_COLOR` | `#ffffff` | PWA background color |
+| `VITE_I18N_COOKIE_KEY` | `${appSlug}-i18n` | i18next cookie name (optional override) |
+| `VITE_THEME_COOKIE_KEY` | `${appSlug}-theme` | theme cookie name (optional override) |
+
+All types are declared in `env.d.ts` (`ImportMetaEnv` interface).
+
+### Dark/light theme: ThemeProvider (shadcn pattern) + SSR cookie
+
+Theme follows the shadcn/ui component pattern: a `ThemeProvider` component in `app/components/theme-provider.tsx` with a `useTheme()` hook. The only difference from the shadcn Vite docs is persistence: **cookie instead of `localStorage`** — cookies are sent by the browser on every request, so the server can render the correct `<html class>` before any JS runs.
+
+**Architecture:**
+1. Root `loader` reads the theme cookie → returns `{ theme }` (`'light'` or `'dark'`).
+2. `Layout` sets `<html className={theme}>` server-side — correct class in initial HTML, no flash for returning users.
+3. `App` (default export in `root.tsx`) wraps `<Outlet>` with `<ThemeProvider serverTheme={theme}>`.
+4. `ThemeProvider` initializes `useState(serverTheme)` — matches server-rendered HTML exactly (no hydration mismatch).
+5. `ThemeProvider`'s `useEffect` syncs `document.documentElement.classList` on every state change — same technique as shadcn Vite docs.
+6. `setTheme(next)` from `useTheme()` updates state immediately (one click, instant visual) AND posts to `/action/theme` via `useFetcher` to persist the cookie.
+7. `action.theme.tsx` returns `new Response(null, { headers: { 'Set-Cookie': ... } })` — `Set-Cookie` header in the HTTP response; browser stores the cookie.
+
+**Cookie utilities:** `app/cookies.server.ts` uses React Router's `createCookie` — server-only, never imported in client modules.
+
+**Cookie key:** `config.themeCookieKey` → `${appSlug}-theme` (e.g. `thenews-theme`). Overridable via `VITE_THEME_COOKIE_KEY` env var.
+
+**RTL direction:** `Layout` also reads `locale` from the loader and sets `<html dir="rtl">` when `locale === 'ar-SA'`. When the user switches language client-side (via `i18n.changeLanguage()`), calling `revalidate()` from `useRevalidator()` tells React Router to re-run the loaders — the root loader reads the new i18n cookie and returns the updated locale, so `<html lang>` and `<html dir>` update in the same navigation cycle.
+
+**CSS split architecture (prevents dark mode token issues):** All Tailwind-specific directives must live in a pure CSS file — not in SCSS. Dart Sass passes unknown at-rules through, but `@tailwindcss/vite` does not reliably resolve `@apply` and `@theme inline` in SCSS output.
+- `app/tailwind.css` — pure CSS: `@import "tailwindcss"`, `tw-animate-css`, `shadcn/tailwind.css`, `@custom-variant dark (&:is(.dark *))`, `@theme` (font tokens), `@theme inline` (color token mappings: `--color-background: var(--background)`, etc.), `@layer base` (`@apply bg-background text-foreground`). All Tailwind directives live here.
+- `app/app.scss` — font imports (`@fontsource/...`) + `:root` and `.dark` CSS custom property declarations only. No Tailwind directives.
+- `root.tsx` imports `./tailwind.css` first, then `./app.scss`.
+
+### PWA: vite-plugin-pwa (SSR-aware)
+
+PWA is implemented via `vite-plugin-pwa` + `@vite-pwa/assets-generator`:
+
+**Manifest:** Generated dynamically from env vars at build/dev time via `loadEnv()` in `vite.config.ts`. The manifest file is `manifest.webmanifest` (served at `/manifest.webmanifest`). Referenced in `root.links()`.
+
+**Service worker strategy:**
+- `registerType: 'autoUpdate'` — SW updates automatically in background.
+- `injectRegister: null` — no automatic HTML injection (incompatible with React Router v7's SSR-generated HTML). Instead, `app/entry.client.tsx` calls `registerSW({ immediate: false })` from `virtual:pwa-register`, guarded by `import.meta.env.PROD`.
+- `devOptions: { enabled: false }` — **service workers must never run in development.** In dev mode there is no build output, so Workbox glob patterns match nothing (causes "Couldn't find configuration for precaching or runtime caching" error) and the SW would intercept HMR traffic.
+- `globDirectory: 'build/client/'` — React Router v7 puts client assets here; must be explicit so Workbox finds the files.
+- Workbox precaches all static assets (`js`, `css`, `ico`, `png`, `svg`, `woff`, `woff2`).
+- `navigateFallback: null` in SSR mode — HTML is always fetched from the server. Change to `navigateFallback: '/index.html'` for SPA/SSG mode.
+- `skipWaiting: true` + `clientsClaim: true` — new SW takes control immediately after `autoUpdate`.
+
+**Icon generation:** `pwa-assets.config.ts` configures `@vite-pwa/assets-generator` with `minimal2023Preset`. Run `npm run pwa:generate` to regenerate all icons from `public/favicon.svg`. After regenerating, update icon references in `vite.config.ts` (manifest.icons) and `app/root.tsx` (links function).
+
+**`entry.client.tsx`:** Custom client entry file (overrides React Router v7's default). Calls `registerSW({ immediate: false })` guarded by `import.meta.env.PROD` — SW registration is production-only.
+
+**TypeScript:** `env.d.ts` includes `/// <reference types="vite-plugin-pwa/client" />` to expose `virtual:pwa-register` and `virtual:pwa-info` module types.
+
+**Platform-specific rolldown bindings:** `vite-plugin-pwa` depends on `rolldown` which has optional platform-specific native bindings (`@rolldown/binding-linux-x64-gnu` for glibc, `@rolldown/binding-linux-x64-musl` for Alpine/musl). Both are listed in `optionalDependencies` in `package.json` — npm installs whichever matches the current platform and silently skips the other. The Docker container uses `--legacy-peer-deps` to resolve them on Alpine.
+
+**Docker node_modules isolation:** `docker-compose.yml` mounts a named volume (`thenews_node_modules`) at `/app/node_modules`. This shadows the bind-mounted project directory's `node_modules` inside the container — the container has its own musl binaries, and the host has its own glibc binaries; they never overwrite each other.
+
+**If typecheck fails locally with "Cannot find native binding":** the container likely ran `npm install` without the named volume in place (old setup). Fix: `npm install @rolldown/binding-linux-x64-gnu@1.1.3 --legacy-peer-deps` on the host. After the docker-compose volume fix is in place, this should never happen again.
+
+### CI/CD and commit quality
+- **GitHub Actions** (`.github/workflows/ci.yml`): runs `commitlint`, `lint`, `lint:styles`, `typecheck`, and `test` on every push and PR.
+- **Husky** (`.husky/commit-msg`): runs `commitlint` locally before every commit, enforcing Conventional Commits format.
+- **typecheck script:** `react-router typegen && tsc` — generates React Router types then type-checks the whole project.
+
+### Blog posts: comark.dev (possible future use)
+If blog posts are added to this project, [comark.dev](https://comark.dev) is a candidate — it is React-compatible and offers MDX-like authoring without being tied to the Vue/Nuxt ecosystem (unlike `remark-mdc`). No decision made yet; this is noted as a future option only.
+
 ---
 
 ## What Is Out of Scope
@@ -48,6 +194,7 @@ Each view must demonstrate at least one interaction state beyond the default. Sp
 - Full onboarding flow
 - Authentication screens
 - Settings screens
+- Books screen (stretch goal — implemented only if time allows after Home and Habits are polished)
 - Google Calendar integration (documented as a "next steps" proposal in the design decisions document, not implemented)
 - AI chat feature (mentioned as a future product evolution idea, not part of the deliverable)
 

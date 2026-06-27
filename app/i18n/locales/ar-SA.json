@@ -1,0 +1,92 @@
+{
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "outOfScope": "خارج النطاق",
+    "readTime": "{{count}} دقيقة قراءة",
+    "nav": {
+      "home": "الرئيسية",
+      "habits": "العادات",
+      "books": "الكتب",
+      "profile": "الملف الشخصي"
+    }
+  },
+  "home": {
+    "title": "الإصدارات",
+    "today": "اليوم",
+    "categories": {
+      "all": "الكل",
+      "business": "الأعمال",
+      "tech": "التقنية",
+      "culture": "الثقافة",
+      "world": "العالم",
+      "sports": "الرياضة",
+      "politics": "السياسة",
+      "economy": "الاقتصاد"
+    },
+    "edition": {
+      "readMore": "قراءة الإصدار",
+      "latest": "أحدث إصدار",
+      "previous": "الإصدارات السابقة",
+      "emptyState": "لا توجد إصدارات في هذه الفئة."
+    }
+  },
+  "habits": {
+    "title": "العادات",
+    "stats": {
+      "activeDays": "الأيام النشطة",
+      "perfectDays": "الأيام المثالية",
+      "totalHabits": "إجمالي العادات",
+      "bestHabit": "أفضل عادة",
+      "currentStreak": "السلسلة الحالية",
+      "longestStreak": "أطول سلسلة"
+    },
+    "streak": {
+      "days_one": "يوم واحد",
+      "days_two": "يومان",
+      "days_few": "{{count}} أيام",
+      "days_many": "{{count}} يومًا",
+      "days_other": "{{count}} يوم",
+      "keepGoing": "استمر هكذا!",
+      "startToday": "ابدأ سلسلتك اليوم.",
+      "newRecord": "رقم قياسي جديد!"
+    },
+    "calendar": {
+      "today": "اليوم",
+      "completed": "مكتمل",
+      "missed": "فائت",
+      "pending": "معلق"
+    },
+    "types": {
+      "edition": "إصدار",
+      "exercise": "تمرين",
+      "books": "قراءة",
+      "water": "ماء",
+      "sleep": "نوم",
+      "meditation": "تأمل",
+      "custom": "مخصص"
+    },
+    "actions": {
+      "addHabit": "إضافة عادة",
+      "complete": "إتمام",
+      "skip": "تخطي",
+      "edit": "تعديل",
+      "delete": "حذف"
+    },
+    "emptyState": {
+      "title": "لا توجد عادات بعد",
+      "description": "أضف عادتك الأولى وابدأ رحلتك."
+    }
+  },
+  "books": {
+    "title": "الكتب",
+    "progress": "{{percent}}% مكتمل",
+    "startReading": "ابدأ القراءة",
+    "continueReading": "متابعة القراءة",
+    "finished": "منتهي",
+    "emptyState": {
+      "title": "رفّك فارغ",
+      "description": "استكشف وأضف كتبًا إلى قائمة قراءتك."
+    }
+  }
+}

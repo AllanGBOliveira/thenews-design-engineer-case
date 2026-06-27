@@ -1,0 +1,89 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Algo deu errado. Tente novamente.",
+    "outOfScope": "Fora do escopo",
+    "readTime": "{{count}} min de leitura",
+    "nav": {
+      "home": "Início",
+      "habits": "Hábitos",
+      "books": "Livros",
+      "profile": "Perfil"
+    }
+  },
+  "home": {
+    "title": "Edições",
+    "today": "Hoje",
+    "categories": {
+      "all": "Tudo",
+      "business": "Negócios",
+      "tech": "Tech",
+      "culture": "Cultura",
+      "world": "Mundo",
+      "sports": "Esportes",
+      "politics": "Política",
+      "economy": "Economia"
+    },
+    "edition": {
+      "readMore": "Ler edição",
+      "latest": "Última edição",
+      "previous": "Edições anteriores",
+      "emptyState": "Nenhuma edição encontrada nesta categoria."
+    }
+  },
+  "habits": {
+    "title": "Hábitos",
+    "stats": {
+      "activeDays": "Dias ativos",
+      "perfectDays": "Dias perfeitos",
+      "totalHabits": "Total de hábitos",
+      "bestHabit": "Melhor hábito",
+      "currentStreak": "Sequência atual",
+      "longestStreak": "Melhor sequência"
+    },
+    "streak": {
+      "days_one": "{{count}} dia",
+      "days_other": "{{count}} dias",
+      "keepGoing": "Continue assim!",
+      "startToday": "Comece hoje sua sequência.",
+      "newRecord": "Novo recorde!"
+    },
+    "calendar": {
+      "today": "Hoje",
+      "completed": "Concluído",
+      "missed": "Perdido",
+      "pending": "Pendente"
+    },
+    "types": {
+      "edition": "Edição",
+      "exercise": "Exercício",
+      "books": "Leitura",
+      "water": "Água",
+      "sleep": "Sono",
+      "meditation": "Meditação",
+      "custom": "Personalizado"
+    },
+    "actions": {
+      "addHabit": "Adicionar hábito",
+      "complete": "Concluir",
+      "skip": "Pular",
+      "edit": "Editar",
+      "delete": "Excluir"
+    },
+    "emptyState": {
+      "title": "Nenhum hábito ainda",
+      "description": "Adicione seu primeiro hábito e comece sua jornada."
+    }
+  },
+  "books": {
+    "title": "Livros",
+    "progress": "{{percent}}% concluído",
+    "startReading": "Começar a ler",
+    "continueReading": "Continuar lendo",
+    "finished": "Concluído",
+    "emptyState": {
+      "title": "Sua estante está vazia",
+      "description": "Explore e adicione livros à sua lista de leitura."
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again.",
+    "outOfScope": "Out of scope",
+    "readTime": "{{count}} min read",
+    "nav": {
+      "home": "Home",
+      "habits": "Habits",
+      "books": "Books",
+      "profile": "Profile"
+    }
+  },
+  "home": {
+    "title": "Editions",
+    "today": "Today",
+    "categories": {
+      "all": "All",
+      "business": "Business",
+      "tech": "Tech",
+      "culture": "Culture",
+      "world": "World",
+      "sports": "Sports",
+      "politics": "Politics",
+      "economy": "Economy"
+    },
+    "edition": {
+      "readMore": "Read edition",
+      "latest": "Latest edition",
+      "previous": "Previous editions",
+      "emptyState": "No editions found in this category."
+    }
+  },
+  "habits": {
+    "title": "Habits",
+    "stats": {
+      "activeDays": "Active days",
+      "perfectDays": "Perfect days",
+      "totalHabits": "Total habits",
+      "bestHabit": "Best habit",
+      "currentStreak": "Current streak",
+      "longestStreak": "Longest streak"
+    },
+    "streak": {
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "keepGoing": "Keep it up!",
+      "startToday": "Start your streak today.",
+      "newRecord": "New record!"
+    },
+    "calendar": {
+      "today": "Today",
+      "completed": "Completed",
+      "missed": "Missed",
+      "pending": "Pending"
+    },
+    "types": {
+      "edition": "Edition",
+      "exercise": "Exercise",
+      "books": "Reading",
+      "water": "Water",
+      "sleep": "Sleep",
+      "meditation": "Meditation",
+      "custom": "Custom"
+    },
+    "actions": {
+      "addHabit": "Add habit",
+      "complete": "Complete",
+      "skip": "Skip",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "emptyState": {
+      "title": "No habits yet",
+      "description": "Add your first habit and start your journey."
+    }
+  },
+  "books": {
+    "title": "Books",
+    "progress": "{{percent}}% complete",
+    "startReading": "Start reading",
+    "continueReading": "Continue reading",
+    "finished": "Finished",
+    "emptyState": {
+      "title": "Your shelf is empty",
+      "description": "Explore and add books to your reading list."
+    }
+  }
+}
