@@ -1,1 +1,2 @@
 - [Language rule](feedback_language.md) — all file content must be in English, never PT-BR
+- [SCSS + CSS tokens](feedback_scss_tokens.md) — SCSS for syntax only; tokens always as CSS custom properties, never SCSS variables

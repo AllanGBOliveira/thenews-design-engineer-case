@@ -1,0 +1,17 @@
+FROM node:24-alpine
+
+# Create working directory and dynamic folders before switching user
+RUN mkdir -p /app \
+    && mkdir -p /app/node_modules/.cache \
+    && chown -R node:node /app
+
+WORKDIR /app
+
+# Non-root user — prevents root-owned files on the host volume
+USER node
+
+ARG PORT=5173
+ENV PORT=${PORT}
+EXPOSE ${PORT}
+
+CMD ["npm", "run", "dev", "--", "--host"]
