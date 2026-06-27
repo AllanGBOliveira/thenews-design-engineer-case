@@ -1,0 +1,1 @@
+- [Language rule](feedback_language.md) — all file content must be in English, never PT-BR

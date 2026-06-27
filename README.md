@@ -55,6 +55,20 @@ docker build -t my-app .
 docker run -p 3000:3000 my-app
 ```
 
+### Docker Compose
+
+Start the development server with node_modules installed on the host:
+
+```bash
+docker compose up
+```
+
+The app will be available at `http://localhost:5173`. The project directory is mounted into the container, so `node_modules` will be written back to your local machine — keeping editor type checking and autocomplete working.
+
+To use a different port, set `PORT` in your `.env` file.
+
+---
+
 The containerized application can be deployed to any platform that supports Docker, including:
 
 - AWS ECS
