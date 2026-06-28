@@ -12,49 +12,24 @@ import { cn } from '~/lib/utils'
 type NavItemDef = {
   to: string
   labelKey: string
+  ariaLabelKey: string
   icon: React.ComponentType<{ size?: number; className?: string }>
-  ariaLabel: string
 }
 
 const NAV_CONFIG: NavItemDef[] = [
-  {
-    to: '/',
-    labelKey: 'common.nav.edition',
-    icon: IoNewspaper,
-    ariaLabel: 'Edição — ler a edição do dia',
-  },
-  {
-    to: '/habits',
-    labelKey: 'common.nav.habits',
-    icon: IoFlame,
-    ariaLabel: 'Hábitos — streak e gamificação de leitura',
-  },
-  {
-    to: '/cup',
-    labelKey: 'common.nav.cup',
-    icon: IoFootball,
-    ariaLabel: 'Copa — bolão e jogos da temporada',
-  },
-  {
-    to: '/books',
-    labelKey: 'common.nav.books',
-    icon: IoBook,
-    ariaLabel: 'Livros — sua biblioteca de leitura',
-  },
-  {
-    to: '/more',
-    labelKey: 'common.nav.more',
-    icon: IoReorderThree,
-    ariaLabel: 'Mais — todas as funcionalidades',
-  },
+  { to: '/',       labelKey: 'common.nav.edition', ariaLabelKey: 'common.nav.editionAria', icon: IoNewspaper },
+  { to: '/habits', labelKey: 'common.nav.habits',  ariaLabelKey: 'common.nav.habitsAria',  icon: IoFlame },
+  { to: '/cup',    labelKey: 'common.nav.cup',     ariaLabelKey: 'common.nav.cupAria',     icon: IoFootball },
+  { to: '/books',  labelKey: 'common.nav.books',   ariaLabelKey: 'common.nav.booksAria',   icon: IoBook },
+  { to: '/more',   labelKey: 'common.nav.more',    ariaLabelKey: 'common.nav.moreAria',    icon: IoReorderThree },
 ]
 
 function NavItemButton({
   to,
   label,
-  icon: Icon,
   ariaLabel,
-}: Omit<NavItemDef, 'labelKey'> & { label: string }) {
+  icon: Icon,
+}: { to: string; label: string; ariaLabel: string; icon: NavItemDef['icon'] }) {
   return (
     <NavLink
       to={to}
@@ -98,7 +73,7 @@ export function BottomNav() {
 
   return (
     <nav
-      aria-label="Navegação principal"
+      aria-label={t('common.a11y.nav')}
       className="fixed bottom-0 inset-x-0 z-50 h-16 bg-chrome-bg border-t border-chrome-divider"
     >
       <ul className="flex items-stretch h-full list-none m-0 p-0" role="list">
@@ -107,8 +82,8 @@ export function BottomNav() {
             <NavItemButton
               to={item.to}
               label={t(item.labelKey)}
+              ariaLabel={t(item.ariaLabelKey)}
               icon={item.icon}
-              ariaLabel={item.ariaLabel}
             />
           </li>
         ))}

@@ -4,6 +4,17 @@
     "error": "Something went wrong. Please try again.",
     "outOfScope": "Out of scope",
     "readTime": "{{count}} min read",
+    "a11y": {
+      "nav": "Main navigation",
+      "quickActions": "Header quick actions",
+      "goHome": "the news — go to home page",
+      "language": "Language: {{lang}}. Change language",
+      "selectLanguage": "Select language",
+      "unread_one": "{{count}} unread",
+      "unread_other": "{{count}} unread",
+      "closeMenu": "Close menu",
+      "moreMenu": "Features menu"
+    },
     "nav": {
       "edition": "edition",
       "habits": "habits",
@@ -11,15 +22,54 @@
       "books": "books",
       "more": "more",
       "home": "Home",
-      "profile": "Profile"
+      "profile": "Profile",
+      "editionAria": "Edition — read today's edition",
+      "habitsAria": "Habits — reading streak and gamification",
+      "cupAria": "Cup — pools and season games",
+      "booksAria": "Books — your reading library",
+      "moreAria": "More — all features"
+    },
+    "header": {
+      "podcasts": "Podcasts",
+      "favorites": "Likes and favorites",
+      "messages": "Conversations and messages",
+      "thermometer": "Edition impartiality thermometer",
+      "settings": "Account settings"
     },
     "more": {
       "title": "More",
       "subtitle": "All features",
+      "badge": {
+        "new": "NEW",
+        "earnPrizes": "EARN PRIZES"
+      },
       "sections": {
         "resources": "Resources",
         "account": "Account",
         "contact": "Get in Touch"
+      },
+      "items": {
+        "notifications":  { "label": "Notifications",     "description": "notifications center" },
+        "streak":         { "label": "My Streak",         "description": "reading the edition" },
+        "discussions":    { "label": "Discussions",       "description": "forum and daily debates" },
+        "games":          { "label": "Games",             "description": "Palavritas, Teia and more" },
+        "cupitas":        { "label": "Cupitas",           "description": "predict standings and winners" },
+        "event":          { "label": "Event seis&seis",   "description": "learn more about the event" },
+        "community":      { "label": "Community",         "description": "books social feed" },
+        "search":         { "label": "Search people",     "description": "find readers by name or @" },
+        "coupons":        { "label": "Coupons",           "description": "exclusive discounts for you" },
+        "gift":           { "label": "Gift",              "description": "earn rewards by referring" },
+        "newsFeed":       { "label": "News",              "description": "personalized news feed" },
+        "pastEditions":   { "label": "Past Editions",     "description": "newsletter archive" },
+        "agenda":         { "label": "Calendar",          "description": "newsletter calendar" },
+        "podcasts":       { "label": "Podcasts",          "description": "episode library" },
+        "profile":        { "label": "My Profile",        "description": "account settings" },
+        "blocked":        { "label": "Blocked users",     "description": "manage who you blocked" },
+        "onboarding":     { "label": "Redo Onboarding",  "description": "interactive onboarding replay" },
+        "help":           { "label": "Help",              "description": "support center" },
+        "emailContact":   { "label": "E-mail",            "description": "app@thenews.com.br" },
+        "site":           { "label": "The News Site",     "description": "thenews.com.br" },
+        "instagram":      { "label": "Instagram",         "description": "@thenews.cc" }
       }
     }
   },

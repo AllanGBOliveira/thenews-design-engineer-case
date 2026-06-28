@@ -33,9 +33,9 @@ export function meta() {
 type MoreItem = {
   icon: React.ComponentType<{ size?: number; className?: string }>
   iconBg: string
-  label: string
-  description: string
-  badge?: string
+  labelKey: string
+  descriptionKey: string
+  badgeKey?: string
   badgeVariant?: 'new' | 'promo'
 }
 
@@ -50,157 +50,49 @@ const MORE_SECTIONS: MoreSection[] = [
   {
     titleKey: 'common.more.sections.resources',
     items: [
-      {
-        icon: IoNotifications,
-        iconBg: '#92400E',
-        label: 'Notificações',
-        description: 'central de notificações',
-      },
-      {
-        icon: IoFlame,
-        iconBg: '#B91C1C',
-        label: 'Meu Streak',
-        description: 'leitura da edição',
-      },
-      {
-        icon: IoChatbubbles,
-        iconBg: '#374151',
-        label: 'Discussões',
-        description: 'fórum e debates do dia',
-      },
-      {
-        icon: IoGameController,
-        iconBg: '#6D28D9',
-        label: 'Jogos',
-        description: 'Palavritas, Teia e mais',
-        badge: 'NOVO',
-        badgeVariant: 'new',
-      },
-      {
-        icon: IoFootball,
-        iconBg: '#166534',
-        label: 'Copitas',
-        description: 'palpita classificados e vencedores',
-      },
-      {
-        icon: IoPricetag,
-        iconBg: '#9F1239',
-        label: 'Evento seis&seis',
-        description: 'saiba mais sobre o evento',
-      },
-      {
-        icon: IoPeople,
-        iconBg: '#1D4ED8',
-        label: 'Comunidade',
-        description: 'feed social de livros',
-      },
-      {
-        icon: IoSearch,
-        iconBg: '#0E7490',
-        label: 'Buscar pessoas',
-        description: 'encontre leitores por nome ou @',
-      },
-      {
-        icon: IoPricetag,
-        iconBg: '#0F766E',
-        label: 'Cupons',
-        description: 'descontos exclusivos para você',
-      },
-      {
-        icon: IoGift,
-        iconBg: '#7C3AED',
-        label: 'Presente',
-        description: 'ganhe recompensas indicando',
-        badge: 'GANHE PRÊMIOS',
-        badgeVariant: 'promo',
-      },
-      {
-        icon: IoNewspaper,
-        iconBg: '#78350F',
-        label: 'Notícias',
-        description: 'feed personalizado de notícias',
-      },
-      {
-        icon: IoArchive,
-        iconBg: '#1F2937',
-        label: 'Edições Anteriores',
-        description: 'histórico de newsletters',
-      },
-      {
-        icon: IoCalendar,
-        iconBg: '#B91C1C',
-        label: 'Agenda',
-        description: 'calendário de newsletters',
-        badge: 'NOVO',
-        badgeVariant: 'new',
-      },
-      {
-        icon: IoHeadset,
-        iconBg: '#6D28D9',
-        label: 'Podcasts',
-        description: 'biblioteca de episódios',
-        badge: 'NOVO',
-        badgeVariant: 'new',
-      },
+      { icon: IoNotifications,  iconBg: '#92400E', labelKey: 'common.more.items.notifications.label', descriptionKey: 'common.more.items.notifications.description' },
+      { icon: IoFlame,          iconBg: '#B91C1C', labelKey: 'common.more.items.streak.label',        descriptionKey: 'common.more.items.streak.description' },
+      { icon: IoChatbubbles,    iconBg: '#374151', labelKey: 'common.more.items.discussions.label',   descriptionKey: 'common.more.items.discussions.description' },
+      { icon: IoGameController, iconBg: '#6D28D9', labelKey: 'common.more.items.games.label',        descriptionKey: 'common.more.items.games.description',        badgeKey: 'common.more.badge.new', badgeVariant: 'new' },
+      { icon: IoFootball,       iconBg: '#166534', labelKey: 'common.more.items.cupitas.label',      descriptionKey: 'common.more.items.cupitas.description' },
+      { icon: IoPricetag,       iconBg: '#9F1239', labelKey: 'common.more.items.event.label',        descriptionKey: 'common.more.items.event.description' },
+      { icon: IoPeople,         iconBg: '#1D4ED8', labelKey: 'common.more.items.community.label',    descriptionKey: 'common.more.items.community.description' },
+      { icon: IoSearch,         iconBg: '#0E7490', labelKey: 'common.more.items.search.label',       descriptionKey: 'common.more.items.search.description' },
+      { icon: IoPricetag,       iconBg: '#0F766E', labelKey: 'common.more.items.coupons.label',      descriptionKey: 'common.more.items.coupons.description' },
+      { icon: IoGift,           iconBg: '#7C3AED', labelKey: 'common.more.items.gift.label',         descriptionKey: 'common.more.items.gift.description',         badgeKey: 'common.more.badge.earnPrizes', badgeVariant: 'promo' },
+      { icon: IoNewspaper,      iconBg: '#78350F', labelKey: 'common.more.items.newsFeed.label',     descriptionKey: 'common.more.items.newsFeed.description' },
+      { icon: IoArchive,        iconBg: '#1F2937', labelKey: 'common.more.items.pastEditions.label', descriptionKey: 'common.more.items.pastEditions.description' },
+      { icon: IoCalendar,       iconBg: '#B91C1C', labelKey: 'common.more.items.agenda.label',       descriptionKey: 'common.more.items.agenda.description',       badgeKey: 'common.more.badge.new', badgeVariant: 'new' },
+      { icon: IoHeadset,        iconBg: '#6D28D9', labelKey: 'common.more.items.podcasts.label',     descriptionKey: 'common.more.items.podcasts.description',     badgeKey: 'common.more.badge.new', badgeVariant: 'new' },
     ],
   },
   {
     titleKey: 'common.more.sections.account',
     items: [
-      {
-        icon: IoPerson,
-        iconBg: '#1D4ED8',
-        label: 'Meu Perfil',
-        description: 'configurações da conta',
-      },
-      {
-        icon: IoBan,
-        iconBg: '#B91C1C',
-        label: 'Usuários bloqueados',
-        description: 'gerenciar quem você bloqueou',
-      },
-      {
-        icon: IoSchool,
-        iconBg: '#065F46',
-        label: 'Rever Onboarding',
-        description: 'replay do onboarding interativo',
-      },
+      { icon: IoPerson,         iconBg: '#1D4ED8', labelKey: 'common.more.items.profile.label',     descriptionKey: 'common.more.items.profile.description' },
+      { icon: IoBan,            iconBg: '#B91C1C', labelKey: 'common.more.items.blocked.label',     descriptionKey: 'common.more.items.blocked.description' },
+      { icon: IoSchool,         iconBg: '#065F46', labelKey: 'common.more.items.onboarding.label',  descriptionKey: 'common.more.items.onboarding.description' },
     ],
   },
   {
     titleKey: 'common.more.sections.contact',
     items: [
-      {
-        icon: IoHelpCircle,
-        iconBg: '#B45309',
-        label: 'Ajuda',
-        description: 'central de suporte',
-      },
-      {
-        icon: IoMail,
-        iconBg: '#1D4ED8',
-        label: 'E-mail',
-        description: 'app@thenews.com.br',
-      },
-      {
-        icon: IoGlobe,
-        iconBg: '#4338CA',
-        label: 'Site The News',
-        description: 'thenews.com.br',
-      },
-      {
-        icon: IoLogoInstagram,
-        iconBg: '#BE185D',
-        label: 'Instagram',
-        description: '@thenews.cc',
-      },
+      { icon: IoHelpCircle,     iconBg: '#B45309', labelKey: 'common.more.items.help.label',         descriptionKey: 'common.more.items.help.description' },
+      { icon: IoMail,           iconBg: '#1D4ED8', labelKey: 'common.more.items.emailContact.label', descriptionKey: 'common.more.items.emailContact.description' },
+      { icon: IoGlobe,          iconBg: '#4338CA', labelKey: 'common.more.items.site.label',         descriptionKey: 'common.more.items.site.description' },
+      { icon: IoLogoInstagram,  iconBg: '#BE185D', labelKey: 'common.more.items.instagram.label',    descriptionKey: 'common.more.items.instagram.description' },
     ],
   },
 ]
 
 /* ─── Item row ───────────────────────────────────────────────────── */
 
-function MoreItemRow({ icon: Icon, iconBg, label, description, badge, badgeVariant }: MoreItem) {
+function MoreItemRow({ icon: Icon, iconBg, labelKey, descriptionKey, badgeKey, badgeVariant }: MoreItem) {
+  const { t } = useTranslation()
+  const label = t(labelKey)
+  const description = t(descriptionKey)
+  const badge = badgeKey ? t(badgeKey) : undefined
+
   return (
     <li>
       <button
@@ -290,7 +182,7 @@ export default function More() {
                 aria-label={t(section.titleKey)}
               >
                 {section.items.map((item) => (
-                  <MoreItemRow key={item.label} {...item} />
+                  <MoreItemRow key={item.labelKey} {...item} />
                 ))}
               </ul>
             </div>

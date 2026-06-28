@@ -4,6 +4,17 @@
     "error": "Algo salió mal. Inténtalo de nuevo.",
     "outOfScope": "Fuera del alcance",
     "readTime": "{{count}} min de lectura",
+    "a11y": {
+      "nav": "Navegación principal",
+      "quickActions": "Acciones rápidas del encabezado",
+      "goHome": "the news — ir a la página de inicio",
+      "language": "Idioma: {{lang}}. Cambiar idioma",
+      "selectLanguage": "Seleccionar idioma",
+      "unread_one": "{{count}} sin leer",
+      "unread_other": "{{count}} sin leer",
+      "closeMenu": "Cerrar menú",
+      "moreMenu": "Menú de funciones"
+    },
     "nav": {
       "edition": "edición",
       "habits": "hábitos",
@@ -11,15 +22,54 @@
       "books": "libros",
       "more": "más",
       "home": "Inicio",
-      "profile": "Perfil"
+      "profile": "Perfil",
+      "editionAria": "Edición — leer la edición del día",
+      "habitsAria": "Hábitos — racha y gamificación de lectura",
+      "cupAria": "Copa — pronósticos y juegos de temporada",
+      "booksAria": "Libros — tu biblioteca de lectura",
+      "moreAria": "Más — todas las funciones"
+    },
+    "header": {
+      "podcasts": "Podcasts",
+      "favorites": "Me gusta y favoritos",
+      "messages": "Conversaciones y mensajes",
+      "thermometer": "Termómetro de imparcialidad de la edición",
+      "settings": "Configuración de la cuenta"
     },
     "more": {
       "title": "Más",
       "subtitle": "Todas las funciones",
+      "badge": {
+        "new": "NUEVO",
+        "earnPrizes": "GANA PREMIOS"
+      },
       "sections": {
         "resources": "Recursos",
         "account": "Cuenta",
         "contact": "Contáctanos"
+      },
+      "items": {
+        "notifications":  { "label": "Notificaciones",        "description": "centro de notificaciones" },
+        "streak":         { "label": "Mi Racha",              "description": "lectura de la edición" },
+        "discussions":    { "label": "Discusiones",           "description": "foro y debates del día" },
+        "games":          { "label": "Juegos",                "description": "Palavritas, Teia y más" },
+        "cupitas":        { "label": "Copitas",               "description": "predice clasificados y ganadores" },
+        "event":          { "label": "Evento seis&seis",      "description": "más información sobre el evento" },
+        "community":      { "label": "Comunidad",             "description": "feed social de libros" },
+        "search":         { "label": "Buscar personas",       "description": "encuentra lectores por nombre o @" },
+        "coupons":        { "label": "Cupones",               "description": "descuentos exclusivos para ti" },
+        "gift":           { "label": "Regalo",                "description": "gana recompensas por referir" },
+        "newsFeed":       { "label": "Noticias",              "description": "feed de noticias personalizado" },
+        "pastEditions":   { "label": "Ediciones Anteriores",  "description": "historial de newsletters" },
+        "agenda":         { "label": "Agenda",                "description": "calendario de newsletters" },
+        "podcasts":       { "label": "Podcasts",              "description": "biblioteca de episodios" },
+        "profile":        { "label": "Mi Perfil",             "description": "configuración de la cuenta" },
+        "blocked":        { "label": "Usuarios bloqueados",   "description": "gestionar quién bloqueaste" },
+        "onboarding":     { "label": "Revisar Onboarding",   "description": "replay del onboarding interactivo" },
+        "help":           { "label": "Ayuda",                 "description": "centro de soporte" },
+        "emailContact":   { "label": "E-mail",                "description": "app@thenews.com.br" },
+        "site":           { "label": "Sitio The News",        "description": "thenews.com.br" },
+        "instagram":      { "label": "Instagram",             "description": "@thenews.cc" }
       }
     }
   },

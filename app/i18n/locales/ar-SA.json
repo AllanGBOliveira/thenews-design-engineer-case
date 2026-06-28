@@ -4,6 +4,17 @@
     "error": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
     "outOfScope": "خارج النطاق",
     "readTime": "{{count}} دقيقة قراءة",
+    "a11y": {
+      "nav": "التنقل الرئيسي",
+      "quickActions": "الإجراءات السريعة في الرأس",
+      "goHome": "the news — الذهاب إلى الصفحة الرئيسية",
+      "language": "اللغة: {{lang}}. تغيير اللغة",
+      "selectLanguage": "اختر اللغة",
+      "unread_one": "{{count}} غير مقروءة",
+      "unread_other": "{{count}} غير مقروءة",
+      "closeMenu": "إغلاق القائمة",
+      "moreMenu": "قائمة الميزات"
+    },
     "nav": {
       "edition": "الطبعة",
       "habits": "العادات",
@@ -11,15 +22,54 @@
       "books": "الكتب",
       "more": "المزيد",
       "home": "الرئيسية",
-      "profile": "الملف الشخصي"
+      "profile": "الملف الشخصي",
+      "editionAria": "الطبعة — اقرأ إصدار اليوم",
+      "habitsAria": "العادات — سلسلة القراءة والتلعيب",
+      "cupAria": "الكأس — توقعات وألعاب الموسم",
+      "booksAria": "الكتب — مكتبتك للقراءة",
+      "moreAria": "المزيد — جميع الميزات"
+    },
+    "header": {
+      "podcasts": "البودكاست",
+      "favorites": "الإعجابات والمفضلة",
+      "messages": "المحادثات والرسائل",
+      "thermometer": "مقياس نزاهة الإصدار",
+      "settings": "إعدادات الحساب"
     },
     "more": {
       "title": "المزيد",
       "subtitle": "جميع الميزات",
+      "badge": {
+        "new": "جديد",
+        "earnPrizes": "اكسب جوائز"
+      },
       "sections": {
         "resources": "الموارد",
         "account": "الحساب",
         "contact": "تواصل معنا"
+      },
+      "items": {
+        "notifications":  { "label": "الإشعارات",             "description": "مركز الإشعارات" },
+        "streak":         { "label": "سلسلتي",                "description": "قراءة الإصدار" },
+        "discussions":    { "label": "النقاشات",              "description": "المنتدى والنقاشات اليومية" },
+        "games":          { "label": "الألعاب",               "description": "Palavritas وTeia والمزيد" },
+        "cupitas":        { "label": "Copitas",               "description": "توقع الترتيب والفائزين" },
+        "event":          { "label": "حدث seis&seis",         "description": "اعرف المزيد عن الحدث" },
+        "community":      { "label": "المجتمع",               "description": "التغذية الاجتماعية للكتب" },
+        "search":         { "label": "البحث عن أشخاص",       "description": "ابحث عن قراء بالاسم أو @" },
+        "coupons":        { "label": "الكوبونات",             "description": "خصومات حصرية لك" },
+        "gift":           { "label": "هدية",                  "description": "اكسب مكافآت بالإحالة" },
+        "newsFeed":       { "label": "الأخبار",               "description": "تغذية إخبارية مخصصة" },
+        "pastEditions":   { "label": "الإصدارات السابقة",     "description": "أرشيف النشرات الإخبارية" },
+        "agenda":         { "label": "التقويم",               "description": "تقويم النشرات الإخبارية" },
+        "podcasts":       { "label": "البودكاست",             "description": "مكتبة الحلقات" },
+        "profile":        { "label": "ملفي الشخصي",          "description": "إعدادات الحساب" },
+        "blocked":        { "label": "المستخدمون المحظورون",  "description": "إدارة من حظرته" },
+        "onboarding":     { "label": "إعادة الإعداد",         "description": "إعادة تشغيل الإعداد التفاعلي" },
+        "help":           { "label": "المساعدة",              "description": "مركز الدعم" },
+        "emailContact":   { "label": "البريد الإلكتروني",     "description": "app@thenews.com.br" },
+        "site":           { "label": "موقع The News",         "description": "thenews.com.br" },
+        "instagram":      { "label": "إنستغرام",              "description": "@thenews.cc" }
       }
     }
   },

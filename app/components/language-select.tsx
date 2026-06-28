@@ -27,7 +27,7 @@ function flagSrc(countryCode: string) {
 /* ─── Component ──────────────────────────────────────────────────── */
 
 export function LanguageSelect() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { revalidate } = useRevalidator()
   const [open, setOpen] = useState(false)
   const [focusedIdx, setFocusedIdx] = useState(0)
@@ -122,7 +122,7 @@ export function LanguageSelect() {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listboxId}
-        aria-label={`Idioma: ${currentLocale.label}. Alterar idioma`}
+        aria-label={t('common.a11y.language', { lang: currentLocale.label })}
         onClick={() => setOpen(v => !v)}
         className={cn(
           'flex items-center justify-center w-9 h-9 rounded-full transition-colors',
@@ -148,7 +148,7 @@ export function LanguageSelect() {
           ref={listboxRef}
           id={listboxId}
           role="listbox"
-          aria-label="Selecionar idioma"
+          aria-label={t('common.a11y.selectLanguage')}
           aria-labelledby="language-trigger"
           aria-activedescendant={`lang-opt-${LOCALES[focusedIdx]?.code}`}
           onKeyDown={handleListKeyDown}
