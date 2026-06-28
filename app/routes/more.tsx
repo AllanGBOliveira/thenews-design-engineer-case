@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   IoNotifications,
@@ -22,7 +23,7 @@ import {
   IoLogoInstagram,
   IoChevronForward,
 } from 'react-icons/io5'
-import { cn } from '~/lib/utils'
+import { useUser } from '~/context/user-context'
 
 export function meta() {
   return [{ title: 'More — the news' }]
@@ -37,6 +38,7 @@ type MoreItem = {
   descriptionKey: string
   badgeKey?: string
   badgeVariant?: 'new' | 'promo'
+  to?: string
 }
 
 type MoreSection = {
@@ -69,7 +71,7 @@ const MORE_SECTIONS: MoreSection[] = [
   {
     titleKey: 'common.more.sections.account',
     items: [
-      { icon: IoPerson,         iconBg: '#1D4ED8', labelKey: 'common.more.items.profile.label',     descriptionKey: 'common.more.items.profile.description' },
+      { icon: IoPerson,         iconBg: '#1D4ED8', labelKey: 'common.more.items.profile.label',     descriptionKey: 'common.more.items.profile.description', to: '/settings' },
       { icon: IoBan,            iconBg: '#B91C1C', labelKey: 'common.more.items.blocked.label',     descriptionKey: 'common.more.items.blocked.description' },
       { icon: IoSchool,         iconBg: '#065F46', labelKey: 'common.more.items.onboarding.label',  descriptionKey: 'common.more.items.onboarding.description' },
     ],
@@ -87,52 +89,57 @@ const MORE_SECTIONS: MoreSection[] = [
 
 /* ─── Item row ───────────────────────────────────────────────────── */
 
-function MoreItemRow({ icon: Icon, iconBg, labelKey, descriptionKey, badgeKey, badgeVariant }: MoreItem) {
+function MoreItemRow({ icon: Icon, iconBg, labelKey, descriptionKey, badgeKey, to }: MoreItem) {
   const { t } = useTranslation()
   const label = t(labelKey)
   const description = t(descriptionKey)
   const badge = badgeKey ? t(badgeKey) : undefined
 
+  const rowClass = "flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:bg-white/5"
+
+  const content = (
+    <>
+      <span
+        className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
+        style={{ backgroundColor: iconBg }}
+        aria-hidden="true"
+      >
+        <Icon size={20} className="text-white" />
+      </span>
+
+      <span className="flex-1 min-w-0">
+        <span className="block text-[14px] font-medium text-chrome-text leading-snug">
+          {label}
+        </span>
+        <span className="block text-[12px] text-chrome-muted leading-snug">
+          {description}
+        </span>
+      </span>
+
+      {badge && (
+        <span
+          aria-label={badge}
+          className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold leading-none bg-brand text-chrome-bg"
+        >
+          {badge}
+        </span>
+      )}
+
+      <IoChevronForward size={16} className="shrink-0 text-chrome-muted" aria-hidden="true" />
+    </>
+  )
+
   return (
     <li>
-      <button
-        type="button"
-        aria-label={`${label} — ${description}`}
-        className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:bg-white/5"
-      >
-        <span
-          className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0"
-          style={{ backgroundColor: iconBg }}
-          aria-hidden="true"
-        >
-          <Icon size={20} className="text-white" />
-        </span>
-
-        <span className="flex-1 min-w-0">
-          <span className="block text-[14px] font-medium text-chrome-text leading-snug">
-            {label}
-          </span>
-          <span className="block text-[12px] text-chrome-muted leading-snug">
-            {description}
-          </span>
-        </span>
-
-        {badge && (
-          <span
-            aria-label={badge}
-            className={cn(
-              'shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold leading-none',
-              badgeVariant === 'promo'
-                ? 'bg-brand text-chrome-bg'
-                : 'bg-brand text-chrome-bg',
-            )}
-          >
-            {badge}
-          </span>
-        )}
-
-        <IoChevronForward size={16} className="shrink-0 text-chrome-muted" aria-hidden="true" />
-      </button>
+      {to ? (
+        <Link to={to} aria-label={`${label} — ${description}`} className={rowClass}>
+          {content}
+        </Link>
+      ) : (
+        <button type="button" aria-label={`${label} — ${description}`} className={rowClass}>
+          {content}
+        </button>
+      )}
     </li>
   )
 }
@@ -141,6 +148,7 @@ function MoreItemRow({ icon: Icon, iconBg, labelKey, descriptionKey, badgeKey, b
 
 export default function More() {
   const { t } = useTranslation()
+  const user = useUser()
 
   return (
     <div className="min-h-full bg-chrome-bg">
@@ -156,14 +164,19 @@ export default function More() {
             </p>
           </div>
 
-          <div
-            className="w-10 h-10 rounded-full bg-chrome-surface border border-chrome-divider shrink-0 overflow-hidden"
-            aria-hidden="true"
+          <Link
+            to="/settings"
+            aria-label={t('common.more.items.profile.label')}
+            className="w-10 h-10 rounded-full shrink-0 overflow-hidden border-2 border-brand/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
-            <span className="flex items-center justify-center w-full h-full">
-              <IoPerson size={20} className="text-chrome-muted" />
-            </span>
-          </div>
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              width={40}
+              height={40}
+              className="w-full h-full object-cover"
+            />
+          </Link>
         </div>
       </header>
 

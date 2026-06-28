@@ -1,7 +1,7 @@
 import { createContext, use, useEffect, useState } from "react"
 import { config } from "~/config"
 
-export type Theme = "dark" | "light"
+export type Theme = "dark" | "light" | "system"
 
 type ThemeProviderState = {
   theme: Theme
@@ -9,7 +9,7 @@ type ThemeProviderState = {
 }
 
 const ThemeProviderContext = createContext<ThemeProviderState>({
-  theme: "light",
+  theme: "system",
   setTheme: () => null,
 })
 
@@ -30,28 +30,25 @@ export function ThemeProvider({
 }) {
   const [theme, setTheme] = useState<Theme>(serverTheme)
 
-  // On mount: if no explicit cookie was set, detect system preference and persist it.
-  // After this runs once, every subsequent visit has a cookie and the server
-  // renders the correct class — zero flash from that point on.
+  // First visit: no explicit cookie — write "system" so subsequent server renders
+  // recognise the preference and the settings page shows "Automatic" as selected.
   useEffect(() => {
     if (!themeIsExplicit) {
-      const system: Theme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      if (system !== serverTheme) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/set-state-in-effect -- syncing to prefers-color-scheme on mount; SSR-safe: server+client both render serverTheme first, then this corrects to system on first paint
-        setTheme(system)
-      }
-      writeCookie(system)
+      writeCookie('system')
+      // eslint-disable-next-line react-hooks/set-state-in-effect, @eslint-react/set-state-in-effect -- sync to "system" on mount so ThemeDialog reflects the correct selection
+      setTheme('system')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps, @eslint-react/exhaustive-deps -- mount-only; re-running on dep change would fight the persisted cookie
+  // eslint-disable-next-line react-hooks/exhaustive-deps, @eslint-react/exhaustive-deps -- mount-only
   }, [])
 
-  // Keep <html> classList in sync with state on every change.
+  // Keep <html> classList in sync with state. "system" resolves to OS preference.
   useEffect(() => {
     const root = window.document.documentElement
     root.classList.remove("light", "dark")
-    root.classList.add(theme)
+    const effective = theme === "system"
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : theme
+    root.classList.add(effective)
   }, [theme])
 
   const handleSetTheme = (next: Theme) => {

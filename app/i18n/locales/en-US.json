@@ -13,7 +13,8 @@
       "unread_one": "{{count}} unread",
       "unread_other": "{{count}} unread",
       "closeMenu": "Close menu",
-      "moreMenu": "Features menu"
+      "moreMenu": "Features menu",
+      "back": "Go back"
     },
     "nav": {
       "edition": "edition",
@@ -138,6 +139,40 @@
       "title": "No habits yet",
       "description": "Add your first habit and start your journey."
     }
+  },
+  "settings": {
+    "title": "Profile",
+    "sections": {
+      "account": "account"
+    },
+    "rows": {
+      "theme": "theme",
+      "language": "language",
+      "vibration": "vibration",
+      "blockedUsers": "blocked users",
+      "privacy": "privacy policy"
+    },
+    "themeDialog": {
+      "title": "App theme",
+      "system": { "label": "Automatic", "description": "Follows device" },
+      "light":  { "label": "Light" },
+      "dark":   { "label": "Dark" }
+    },
+    "languageDialog": {
+      "title": "Language"
+    },
+    "profile": {
+      "streak": "streak",
+      "editions": "editions",
+      "bestStreak": "best streak"
+    },
+    "themeValues": {
+      "system": "automatic",
+      "light": "light",
+      "dark": "dark"
+    },
+    "signOut": "sign out",
+    "signOutAria": "Sign out of account"
   },
   "cup": {
     "title": "Cup",

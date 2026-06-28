@@ -7,7 +7,6 @@ import {
   IoThermometer,
   IoSettings,
 } from 'react-icons/io5'
-import { LanguageSelect } from '~/components/language-select'
 
 type HeaderAction = {
   icon: React.ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' | 'false' }>
@@ -47,9 +46,6 @@ export function AppHeader() {
           the news
         </span>
       </NavLink>
-
-      {/* Language selector */}
-      <LanguageSelect />
 
       {/* Action buttons */}
       <nav aria-label={t('common.a11y.quickActions')}>

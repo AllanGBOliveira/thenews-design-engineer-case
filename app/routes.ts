@@ -7,5 +7,6 @@ export default [
     route("cup", "routes/cup.tsx"),
     route("books", "routes/books.tsx"),
     route("more", "routes/more.tsx"),
+    route("settings", "routes/settings.tsx"),
   ]),
 ] satisfies RouteConfig;

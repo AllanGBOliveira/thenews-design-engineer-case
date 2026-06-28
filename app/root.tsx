@@ -60,7 +60,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const rawTheme = parseCookie(cookieHeader, config.themeCookieKey)
   const themeIsExplicit = rawTheme !== undefined
-  const theme = (rawTheme === 'dark' ? 'dark' : 'light') as Theme
+  const theme = (rawTheme === 'dark' ? 'dark' : rawTheme === 'system' ? 'system' : 'light') as Theme
 
   // Cookie wins; fall back to Accept-Language (mirrors navigator.language detection on client)
   const locale = (
@@ -92,7 +92,7 @@ const LANG_ATTR: Record<SupportedLocale, string> = {
 // suppressHydrationWarning on <html> because this script mutates class before
 // React touches the DOM, so server HTML and hydrated DOM may differ on className.
 const themeScript = (cookieKey: string) =>
-  `(function(){try{var m=document.cookie.match(new RegExp('(?:^|; )${cookieKey}=([^;]*)'));var t=m?decodeURIComponent(m[1]):(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.classList.add(t)}catch(e){}})();`
+  `(function(){try{var m=document.cookie.match(new RegExp('(?:^|; )${cookieKey}=([^;]*)'));var t=m?decodeURIComponent(m[1]):null;if(!t||t==='system')t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.classList.add(t)}catch(e){}})();`
 
 export function Layout({ children }: { children: ReactNode }) {
   const data = useRouteLoaderData<typeof loader>("root")

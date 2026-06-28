@@ -13,7 +13,8 @@
       "unread_one": "{{count}} غير مقروءة",
       "unread_other": "{{count}} غير مقروءة",
       "closeMenu": "إغلاق القائمة",
-      "moreMenu": "قائمة الميزات"
+      "moreMenu": "قائمة الميزات",
+      "back": "رجوع"
     },
     "nav": {
       "edition": "الطبعة",
@@ -141,6 +142,40 @@
       "title": "لا توجد عادات بعد",
       "description": "أضف عادتك الأولى وابدأ رحلتك."
     }
+  },
+  "settings": {
+    "title": "الملف الشخصي",
+    "sections": {
+      "account": "الحساب"
+    },
+    "rows": {
+      "theme": "المظهر",
+      "language": "اللغة",
+      "vibration": "الاهتزاز",
+      "blockedUsers": "المستخدمون المحظورون",
+      "privacy": "سياسة الخصوصية"
+    },
+    "themeDialog": {
+      "title": "مظهر التطبيق",
+      "system": { "label": "تلقائي", "description": "يتبع الجهاز" },
+      "light":  { "label": "فاتح" },
+      "dark":   { "label": "داكن" }
+    },
+    "languageDialog": {
+      "title": "اللغة"
+    },
+    "profile": {
+      "streak": "السلسلة",
+      "editions": "الإصدارات",
+      "bestStreak": "أفضل سلسلة"
+    },
+    "themeValues": {
+      "system": "تلقائي",
+      "light": "فاتح",
+      "dark": "داكن"
+    },
+    "signOut": "تسجيل الخروج",
+    "signOutAria": "تسجيل الخروج من الحساب"
   },
   "cup": {
     "title": "الكأس",

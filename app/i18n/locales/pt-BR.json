@@ -13,7 +13,8 @@
       "unread_one": "{{count}} não lida",
       "unread_other": "{{count}} não lidas",
       "closeMenu": "Fechar menu",
-      "moreMenu": "Menu de funcionalidades"
+      "moreMenu": "Menu de funcionalidades",
+      "back": "Voltar"
     },
     "nav": {
       "edition": "edição",
@@ -138,6 +139,40 @@
       "title": "Nenhum hábito ainda",
       "description": "Adicione seu primeiro hábito e comece sua jornada."
     }
+  },
+  "settings": {
+    "title": "Perfil",
+    "sections": {
+      "account": "conta"
+    },
+    "rows": {
+      "theme": "tema",
+      "language": "idioma",
+      "vibration": "vibração",
+      "blockedUsers": "usuários bloqueados",
+      "privacy": "política de privacidade"
+    },
+    "themeDialog": {
+      "title": "Tema do app",
+      "system": { "label": "Automático", "description": "Acompanha o celular" },
+      "light":  { "label": "Claro" },
+      "dark":   { "label": "Escuro" }
+    },
+    "languageDialog": {
+      "title": "Idioma"
+    },
+    "profile": {
+      "streak": "sequência",
+      "editions": "edições",
+      "bestStreak": "melhor sequência"
+    },
+    "themeValues": {
+      "system": "automático",
+      "light": "claro",
+      "dark": "escuro"
+    },
+    "signOut": "sair da conta",
+    "signOutAria": "Sair da conta"
   },
   "cup": {
     "title": "Copa",
