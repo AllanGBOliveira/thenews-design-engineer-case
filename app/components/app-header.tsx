@@ -6,6 +6,7 @@ import {
   IoThermometer,
   IoSettings,
 } from 'react-icons/io5'
+import { LanguageSelect } from '~/components/language-select'
 
 type HeaderAction = {
   icon: React.ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' | 'false' }>
@@ -33,14 +34,19 @@ export function AppHeader() {
         aria-label="the news — ir para a página inicial"
         className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-md"
       >
-        <span
-          className="w-7 h-7 rounded-full bg-brand shrink-0"
+        <img
+          src="/favicon.svg"
+          alt=""
           aria-hidden="true"
+          className="w-7 h-7 rounded-full shrink-0 object-cover"
         />
         <span className="text-chrome-text font-bold text-[15px] leading-none tracking-tight select-none">
           the news
         </span>
       </NavLink>
+
+      {/* Language selector */}
+      <LanguageSelect />
 
       {/* Action buttons */}
       <nav aria-label="Ações rápidas do cabeçalho">

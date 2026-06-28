@@ -5,14 +5,27 @@
     "outOfScope": "خارج النطاق",
     "readTime": "{{count}} دقيقة قراءة",
     "nav": {
-      "home": "الرئيسية",
+      "edition": "الطبعة",
       "habits": "العادات",
+      "cup": "الكأس",
       "books": "الكتب",
+      "more": "المزيد",
+      "home": "الرئيسية",
       "profile": "الملف الشخصي"
+    },
+    "more": {
+      "title": "المزيد",
+      "subtitle": "جميع الميزات",
+      "sections": {
+        "resources": "الموارد",
+        "account": "الحساب",
+        "contact": "تواصل معنا"
+      }
     }
   },
   "home": {
     "title": "الإصدارات",
+    "placeholder": "شاشة الرئيسية / التغذية — قيد التطوير.",
     "today": "اليوم",
     "categories": {
       "all": "الكل",
@@ -33,6 +46,7 @@
   },
   "habits": {
     "title": "العادات",
+    "placeholder": "شاشة العادات — قيد التطوير.",
     "stats": {
       "activeDays": "الأيام النشطة",
       "perfectDays": "الأيام المثالية",
@@ -78,8 +92,13 @@
       "description": "أضف عادتك الأولى وابدأ رحلتك."
     }
   },
+  "cup": {
+    "title": "الكأس",
+    "placeholder": "شاشة الكأس — ميزة موسمية، خارج النطاق."
+  },
   "books": {
     "title": "الكتب",
+    "placeholder": "شاشة الكتب — خارج النطاق.",
     "progress": "{{percent}}% مكتمل",
     "startReading": "ابدأ القراءة",
     "continueReading": "متابعة القراءة",

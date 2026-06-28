@@ -5,14 +5,27 @@
     "outOfScope": "Fora do escopo",
     "readTime": "{{count}} min de leitura",
     "nav": {
+      "edition": "edição",
+      "habits": "hábitos",
+      "cup": "copa",
+      "books": "livros",
+      "more": "mais",
       "home": "Início",
-      "habits": "Hábitos",
-      "books": "Livros",
       "profile": "Perfil"
+    },
+    "more": {
+      "title": "Mais",
+      "subtitle": "Todas as funcionalidades",
+      "sections": {
+        "resources": "Recursos",
+        "account": "Conta",
+        "contact": "Entre em Contato"
+      }
     }
   },
   "home": {
     "title": "Edições",
+    "placeholder": "Tela Home / Feed — em desenvolvimento.",
     "today": "Hoje",
     "categories": {
       "all": "Tudo",
@@ -33,6 +46,7 @@
   },
   "habits": {
     "title": "Hábitos",
+    "placeholder": "Tela de Hábitos — em desenvolvimento.",
     "stats": {
       "activeDays": "Dias ativos",
       "perfectDays": "Dias perfeitos",
@@ -75,8 +89,13 @@
       "description": "Adicione seu primeiro hábito e comece sua jornada."
     }
   },
+  "cup": {
+    "title": "Copa",
+    "placeholder": "Tela da Copa — funcionalidade de temporada, fora do escopo."
+  },
   "books": {
     "title": "Livros",
+    "placeholder": "Tela de Livros — stretch goal, fora do escopo do case.",
     "progress": "{{percent}}% concluído",
     "startReading": "Começar a ler",
     "continueReading": "Continuar lendo",

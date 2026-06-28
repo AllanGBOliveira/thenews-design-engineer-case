@@ -5,14 +5,27 @@
     "outOfScope": "Fuera del alcance",
     "readTime": "{{count}} min de lectura",
     "nav": {
+      "edition": "edición",
+      "habits": "hábitos",
+      "cup": "copa",
+      "books": "libros",
+      "more": "más",
       "home": "Inicio",
-      "habits": "Hábitos",
-      "books": "Libros",
       "profile": "Perfil"
+    },
+    "more": {
+      "title": "Más",
+      "subtitle": "Todas las funciones",
+      "sections": {
+        "resources": "Recursos",
+        "account": "Cuenta",
+        "contact": "Contáctanos"
+      }
     }
   },
   "home": {
     "title": "Ediciones",
+    "placeholder": "Pantalla Inicio / Feed — en desarrollo.",
     "today": "Hoy",
     "categories": {
       "all": "Todo",
@@ -33,6 +46,7 @@
   },
   "habits": {
     "title": "Hábitos",
+    "placeholder": "Pantalla de Hábitos — en desarrollo.",
     "stats": {
       "activeDays": "Días activos",
       "perfectDays": "Días perfectos",
@@ -75,8 +89,13 @@
       "description": "Agrega tu primer hábito y comienza tu viaje."
     }
   },
+  "cup": {
+    "title": "Copa",
+    "placeholder": "Pantalla Copa — función de temporada, fuera del alcance."
+  },
   "books": {
     "title": "Libros",
+    "placeholder": "Pantalla de Libros — fuera del alcance.",
     "progress": "{{percent}}% completado",
     "startReading": "Empezar a leer",
     "continueReading": "Continuar leyendo",

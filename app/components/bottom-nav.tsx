@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import {
   IoNewspaper,
   IoFlame,
@@ -10,49 +11,50 @@ import { cn } from '~/lib/utils'
 
 type NavItemDef = {
   to: string
-  label: string
+  labelKey: string
   icon: React.ComponentType<{ size?: number; className?: string }>
   ariaLabel: string
 }
 
-const NAV_ITEMS: NavItemDef[] = [
+const NAV_CONFIG: NavItemDef[] = [
   {
     to: '/',
-    label: 'edição',
+    labelKey: 'common.nav.edition',
     icon: IoNewspaper,
     ariaLabel: 'Edição — ler a edição do dia',
   },
   {
     to: '/habits',
-    label: 'hábitos',
+    labelKey: 'common.nav.habits',
     icon: IoFlame,
     ariaLabel: 'Hábitos — streak e gamificação de leitura',
   },
   {
-    to: '/copa',
-    label: 'copa',
+    to: '/cup',
+    labelKey: 'common.nav.cup',
     icon: IoFootball,
     ariaLabel: 'Copa — bolão e jogos da temporada',
   },
   {
-    to: '/livros',
-    label: 'livros',
+    to: '/books',
+    labelKey: 'common.nav.books',
     icon: IoBook,
     ariaLabel: 'Livros — sua biblioteca de leitura',
   },
+  {
+    to: '/more',
+    labelKey: 'common.nav.more',
+    icon: IoReorderThree,
+    ariaLabel: 'Mais — todas as funcionalidades',
+  },
 ]
-
-type BottomNavProps = {
-  onMoreClick: () => void
-  isMoreOpen: boolean
-}
 
 function NavItemButton({
   to,
   label,
   icon: Icon,
   ariaLabel,
-}: NavItemDef) {
+}: Omit<NavItemDef, 'labelKey'> & { label: string }) {
   return (
     <NavLink
       to={to}
@@ -91,52 +93,25 @@ function NavItemButton({
   )
 }
 
-export function BottomNav({ onMoreClick, isMoreOpen }: BottomNavProps) {
+export function BottomNav() {
+  const { t } = useTranslation()
+
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed bottom-0 inset-x-0 z-40 h-16 bg-chrome-bg border-t border-chrome-divider"
+      className="fixed bottom-0 inset-x-0 z-50 h-16 bg-chrome-bg border-t border-chrome-divider"
     >
       <ul className="flex items-stretch h-full list-none m-0 p-0" role="list">
-        {NAV_ITEMS.map((item) => (
+        {NAV_CONFIG.map((item) => (
           <li key={item.to} className="flex-1 flex">
-            <NavItemButton {...item} />
+            <NavItemButton
+              to={item.to}
+              label={t(item.labelKey)}
+              icon={item.icon}
+              ariaLabel={item.ariaLabel}
+            />
           </li>
         ))}
-
-        {/* "Mais" — triggers the full-screen drawer (not a route) */}
-        <li className="flex-1 flex">
-          <button
-            type="button"
-            onClick={onMoreClick}
-            aria-label={isMoreOpen ? 'Fechar menu de funcionalidades' : 'Mais — abrir menu de funcionalidades'}
-            aria-expanded={isMoreOpen}
-            aria-controls="nav-drawer"
-            aria-haspopup="dialog"
-            className={cn(
-              'flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors duration-150',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset',
-              isMoreOpen ? 'text-brand' : 'text-chrome-muted',
-            )}
-          >
-            <span
-              className={cn(
-                'flex items-center justify-center w-14 h-8 rounded-full transition-colors duration-150',
-                isMoreOpen ? 'bg-brand' : 'bg-transparent',
-              )}
-              aria-hidden="true"
-            >
-              <IoReorderThree
-                size={22}
-                className={cn(
-                  'transition-colors duration-150',
-                  isMoreOpen ? 'text-chrome-bg' : 'text-chrome-muted',
-                )}
-              />
-            </span>
-            <span className="text-[10px] font-medium leading-none">mais</span>
-          </button>
-        </li>
       </ul>
     </nav>
   )

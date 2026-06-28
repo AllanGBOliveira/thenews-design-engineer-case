@@ -280,17 +280,17 @@ export function NavDrawer({ open, onClose }: NavDrawerProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — stops above the bottom nav (bottom-16 = 64px) */}
       <div
         aria-hidden="true"
         onClick={onClose}
         className={cn(
-          'fixed inset-0 z-50 bg-black/70 transition-opacity duration-300',
+          'fixed top-0 inset-x-0 bottom-16 z-40 bg-black/70 transition-opacity duration-300',
           open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
       />
 
-      {/* Drawer panel — full-width, slides from right */}
+      {/* Drawer panel — full-width, slides from right, stops above bottom nav */}
       <div
         id="nav-drawer"
         ref={panelRef}
@@ -299,7 +299,7 @@ export function NavDrawer({ open, onClose }: NavDrawerProps) {
         aria-label="Menu de funcionalidades"
         aria-hidden={!open}
         className={cn(
-          'fixed inset-y-0 right-0 z-50 w-full bg-chrome-bg overflow-y-auto',
+          'fixed top-0 right-0 bottom-16 z-40 w-full bg-chrome-bg overflow-y-auto',
           'transition-transform duration-300 ease-in-out',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
@@ -316,20 +316,38 @@ export function NavDrawer({ open, onClose }: NavDrawerProps) {
               </p>
             </div>
 
-            {/* User avatar placeholder */}
-            <div
-              className="w-10 h-10 rounded-full bg-chrome-surface border border-chrome-divider shrink-0 overflow-hidden"
-              aria-hidden="true"
-            >
-              <span className="flex items-center justify-center w-full h-full">
-                <IoPerson size={20} className="text-chrome-muted" aria-hidden="true" />
-              </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* User avatar placeholder */}
+              <div
+                className="w-10 h-10 rounded-full bg-chrome-surface border border-chrome-divider overflow-hidden"
+                aria-hidden="true"
+              >
+                <span className="flex items-center justify-center w-full h-full">
+                  <IoPerson size={20} className="text-chrome-muted" aria-hidden="true" />
+                </span>
+              </div>
+
+              {/* Close button — in header so it's always reachable */}
+              <button
+                ref={closeBtnRef}
+                type="button"
+                onClick={onClose}
+                aria-label="Fechar menu"
+                className={cn(
+                  'flex items-center justify-center w-10 h-10 rounded-full',
+                  'bg-chrome-surface border border-chrome-divider',
+                  'text-chrome-text hover:bg-white/10 transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                )}
+              >
+                <IoClose size={20} aria-hidden="true" />
+              </button>
             </div>
           </div>
         </header>
 
         {/* Sections */}
-        <div className="pb-20">
+        <div className="pb-6">
           {DRAWER_SECTIONS.map((section) => (
             <section key={section.title} className="mt-5">
               <h2
@@ -357,23 +375,6 @@ export function NavDrawer({ open, onClose }: NavDrawerProps) {
             the news App v1.5.2
           </p>
         </div>
-
-        {/* Close button — floating, accessible */}
-        <button
-          ref={closeBtnRef}
-          type="button"
-          onClick={onClose}
-          aria-label="Fechar menu"
-          className={cn(
-            'fixed bottom-20 right-4 z-60',
-            'flex items-center justify-center w-12 h-12 rounded-full',
-            'bg-chrome-surface border border-chrome-divider shadow-lg',
-            'text-chrome-text hover:bg-chrome-bg transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-          )}
-        >
-          <IoClose size={22} aria-hidden="true" />
-        </button>
       </div>
     </>
   )

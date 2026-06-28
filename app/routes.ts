@@ -4,7 +4,8 @@ export default [
   layout("routes/_app.tsx", [
     index("routes/home.tsx"),
     route("habits", "routes/habits.tsx"),
-    route("copa", "routes/copa.tsx"),
-    route("livros", "routes/livros.tsx"),
+    route("cup", "routes/cup.tsx"),
+    route("books", "routes/books.tsx"),
+    route("more", "routes/more.tsx"),
   ]),
 ] satisfies RouteConfig;
