@@ -14,7 +14,7 @@ const config: Config = {
 // SSG: pre-render all app routes to static HTML at build time.
 // The pre-rendered HTML is placed in build/client/<route>/index.html.
 if (renderMode === "ssg") {
-  config.prerender = async () => ["/", "/habits"];
+  config.prerender = async () => ["/", "/habits", "/copa", "/livros"];
 }
 
 export default config satisfies Config;

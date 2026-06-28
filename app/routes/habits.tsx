@@ -1,15 +1,14 @@
-import { useTranslation } from 'react-i18next'
-
 export function meta() {
   return [{ title: 'Hábitos — the news' }]
 }
 
 export default function Habits() {
-  const { t } = useTranslation()
-
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
-      <h1 className="text-2xl font-bold">{t('habits.title')}</h1>
+    <div className="px-4 py-6">
+      <p className="text-muted-foreground text-sm text-center mt-8">
+        {/* Tela de Hábitos — em desenvolvimento */}
+        Conteúdo de Hábitos em desenvolvimento.
+      </p>
     </div>
   )
 }

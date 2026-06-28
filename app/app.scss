@@ -2,6 +2,19 @@
 @import "@fontsource/plus-jakarta-sans/500.css";
 @import "@fontsource/plus-jakarta-sans/700.css";
 
+/* Brand + chrome tokens — theme-independent (chrome is always dark) */
+:root {
+  --brand: #FECF00;
+  --brand-dim: #FEDB48;
+  --chrome-bg: #1A1A24;
+  --chrome-surface: #1E1E28;
+  --chrome-text: #F0F0F0;
+  --chrome-muted: #74748A;
+  --chrome-border: rgba(254, 207, 0, 0.15);
+  --chrome-divider: rgba(255, 255, 255, 0.07);
+  --badge-red: #EF4444;
+}
+
 :root {
   --background: oklch(100% 0 0deg);
   --foreground: oklch(14.5% 0 0deg);
