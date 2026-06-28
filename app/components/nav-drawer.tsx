@@ -203,7 +203,7 @@ function DrawerItemRow({ icon: Icon, iconBg, label, description, badge, badgeVar
       <button
         type="button"
         aria-label={`${label} — ${description}`}
-        className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:bg-white/5"
+        className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-chrome-text/5 transition-colors focus-visible:outline-none focus-visible:bg-chrome-text/5"
       >
         {/* Icon */}
         <span
@@ -231,8 +231,8 @@ function DrawerItemRow({ icon: Icon, iconBg, label, description, badge, badgeVar
             className={cn(
               'shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold leading-none',
               badgeVariant === 'promo'
-                ? 'bg-brand text-chrome-bg'
-                : 'bg-brand text-chrome-bg',
+                ? 'bg-brand text-[#0A0A0F]'
+                : 'bg-brand text-[#0A0A0F]',
             )}
           >
             {badge}
@@ -299,7 +299,7 @@ export function NavDrawer({ open, onClose }: NavDrawerProps) {
         aria-label="Menu de funcionalidades"
         aria-hidden={!open}
         className={cn(
-          'fixed top-0 right-0 bottom-16 z-40 w-full bg-chrome-bg overflow-y-auto',
+          'fixed top-0 right-0 bottom-16 z-40 w-full bg-chrome-surface dark:bg-chrome-bg overflow-y-auto',
           'transition-transform duration-300 ease-in-out',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
@@ -335,8 +335,8 @@ export function NavDrawer({ open, onClose }: NavDrawerProps) {
                 aria-label="Fechar menu"
                 className={cn(
                   'flex items-center justify-center w-10 h-10 rounded-full',
-                  'bg-chrome-surface border border-chrome-divider',
-                  'text-chrome-text hover:bg-white/10 transition-colors',
+                  'bg-chrome-bg dark:bg-chrome-surface border border-chrome-divider',
+                  'text-chrome-text hover:bg-chrome-text/10 transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
                 )}
               >
@@ -356,7 +356,7 @@ export function NavDrawer({ open, onClose }: NavDrawerProps) {
                 {section.title}
               </h2>
 
-              <div className="bg-chrome-surface mx-0">
+              <div className="bg-chrome-bg dark:bg-chrome-surface mx-0">
                 <ul
                   className="list-none m-0 p-0 divide-y divide-chrome-divider"
                   role="list"

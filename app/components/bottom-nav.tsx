@@ -50,7 +50,7 @@ function NavItemButton({
               size={22}
               className={cn(
                 'transition-colors duration-150',
-                isActive ? 'text-chrome-bg' : 'text-chrome-muted',
+                isActive ? 'text-[#0A0A0F]' : 'text-chrome-muted',
               )}
             />
           </span>

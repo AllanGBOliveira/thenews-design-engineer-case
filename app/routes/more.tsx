@@ -95,7 +95,7 @@ function MoreItemRow({ icon: Icon, iconBg, labelKey, descriptionKey, badgeKey, t
   const description = t(descriptionKey)
   const badge = badgeKey ? t(badgeKey) : undefined
 
-  const rowClass = "flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:bg-white/5"
+  const rowClass = "flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-chrome-text/5 transition-colors focus-visible:outline-none focus-visible:bg-chrome-text/5"
 
   const content = (
     <>
@@ -119,7 +119,7 @@ function MoreItemRow({ icon: Icon, iconBg, labelKey, descriptionKey, badgeKey, t
       {badge && (
         <span
           aria-label={badge}
-          className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold leading-none bg-brand text-chrome-bg"
+          className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold leading-none bg-brand text-[#0A0A0F]"
         >
           {badge}
         </span>
@@ -151,7 +151,7 @@ export default function More() {
   const user = useUser()
 
   return (
-    <div className="min-h-full bg-chrome-bg">
+    <div className="min-h-full bg-chrome-surface dark:bg-chrome-bg">
       {/* Page header */}
       <header className="sticky top-0 z-10 bg-chrome-bg border-b border-brand/25 px-4 pt-4 pb-3">
         <div className="flex items-start justify-between gap-3">
@@ -188,7 +188,7 @@ export default function More() {
               {t(section.titleKey)}
             </h2>
 
-            <div className="bg-chrome-surface">
+            <div className="bg-chrome-bg dark:bg-chrome-surface">
               <ul
                 className="list-none m-0 p-0 divide-y divide-chrome-divider"
                 role="list"

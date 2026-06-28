@@ -61,7 +61,7 @@ export function AppHeader() {
                   <button
                     type="button"
                     aria-label={fullLabel}
-                    className="flex items-center justify-center w-9 h-9 rounded-full text-chrome-text/70 hover:text-chrome-text hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    className="flex items-center justify-center w-9 h-9 rounded-full text-chrome-text/70 hover:text-chrome-text hover:bg-chrome-text/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                   >
                     <Icon size={20} aria-hidden="true" />
                   </button>
