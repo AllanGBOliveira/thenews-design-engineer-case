@@ -74,7 +74,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label={t('common.a11y.nav')}
-      className="fixed bottom-0 inset-x-0 z-50 h-16 bg-chrome-bg border-t border-chrome-divider"
+      className="shrink-0 h-16 bg-chrome-bg border-t border-chrome-divider"
     >
       <ul className="flex items-stretch h-full list-none m-0 p-0" role="list">
         {NAV_CONFIG.map((item) => (

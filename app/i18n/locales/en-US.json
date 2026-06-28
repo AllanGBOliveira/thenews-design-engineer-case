@@ -149,6 +149,10 @@
       "theme": "theme",
       "language": "language",
       "vibration": "vibration",
+      "publicProfile": "public profile",
+      "shareHabits": "share all habits",
+      "likedEditions": "liked editions",
+      "notificationPrefs": "notification preferences",
       "blockedUsers": "blocked users",
       "privacy": "privacy policy"
     },
@@ -162,9 +166,56 @@
       "title": "Language"
     },
     "profile": {
+      "defineUsername": "@set username",
+      "memberSince": "Member since {{date}}",
+      "addSocials": "Add social networks",
+      "followers": "followers",
+      "following": "following",
+      "share": "Share profile",
       "streak": "streak",
       "editions": "editions",
       "bestStreak": "best streak"
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "habitComplete": "Completed habit: {{name}}",
+      "editionRead": "Read edition {{name}}"
+    },
+    "verification": {
+      "title": "Verified Badge",
+      "subtitle": "Complete the challenges to earn the blue badge",
+      "bookReading": "Book reading hours",
+      "editionsRead": "Editions read",
+      "streakRecord": "Streak days",
+      "habitsCompleted": "Habits completed",
+      "appOpens": "App opens",
+      "inviteFriends": "Friends invited",
+      "totalProgress": "Total progress:",
+      "invite": "Invite"
+    },
+    "performance": {
+      "title": "Your Performance",
+      "subtitle": "Check your overall performance",
+      "streak": "Streak",
+      "books": "Books",
+      "habits": "Habits"
+    },
+    "habitsToday": {
+      "title": "Today's Habits"
+    },
+    "activityGrid": {
+      "title": "Your Activity",
+      "days_one": "{{count}} day of activity",
+      "days_other": "{{count}} days of activity",
+      "less": "less",
+      "more": "more"
+    },
+    "bookshelf": {
+      "title_one": "My Shelf ({{count}})",
+      "title_other": "My Shelf ({{count}})"
+    },
+    "engagement": {
+      "title": "Engagement"
     },
     "themeValues": {
       "system": "automatic",
@@ -172,7 +223,9 @@
       "dark": "dark"
     },
     "signOut": "sign out",
-    "signOutAria": "Sign out of account"
+    "signOutAria": "Sign out of account",
+    "deleteAccount": "delete my account",
+    "deleteAccountAria": "Permanently delete my account"
   },
   "cup": {
     "title": "Cup",

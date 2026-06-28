@@ -152,6 +152,10 @@
       "theme": "المظهر",
       "language": "اللغة",
       "vibration": "الاهتزاز",
+      "publicProfile": "الملف الشخصي العام",
+      "shareHabits": "مشاركة جميع العادات",
+      "likedEditions": "الإصدارات المعجب بها",
+      "notificationPrefs": "تفضيلات الإشعارات",
       "blockedUsers": "المستخدمون المحظورون",
       "privacy": "سياسة الخصوصية"
     },
@@ -165,9 +169,56 @@
       "title": "اللغة"
     },
     "profile": {
+      "defineUsername": "@تحديد اسم المستخدم",
+      "memberSince": "عضو منذ {{date}}",
+      "addSocials": "إضافة شبكات اجتماعية",
+      "followers": "متابع",
+      "following": "يتابع",
+      "share": "مشاركة الملف الشخصي",
       "streak": "السلسلة",
       "editions": "الإصدارات",
       "bestStreak": "أفضل سلسلة"
+    },
+    "recentActivity": {
+      "title": "النشاط الأخير",
+      "habitComplete": "أتم عادة: {{name}}",
+      "editionRead": "قرأ إصدار {{name}}"
+    },
+    "verification": {
+      "title": "شارة موثق",
+      "subtitle": "أكمل التحديات للحصول على الشارة الزرقاء",
+      "bookReading": "ساعات قراءة الكتب",
+      "editionsRead": "الإصدارات المقروءة",
+      "streakRecord": "أيام السلسلة",
+      "habitsCompleted": "العادات المكتملة",
+      "appOpens": "فتح التطبيق",
+      "inviteFriends": "أصدقاء مدعوون",
+      "totalProgress": "التقدم الإجمالي:",
+      "invite": "دعوة"
+    },
+    "performance": {
+      "title": "أداؤك",
+      "subtitle": "تحقق من أدائك العام",
+      "streak": "السلسلة",
+      "books": "الكتب",
+      "habits": "العادات"
+    },
+    "habitsToday": {
+      "title": "عادات اليوم"
+    },
+    "activityGrid": {
+      "title": "نشاطك",
+      "days_one": "{{count}} يوم من النشاط",
+      "days_other": "{{count}} أيام من النشاط",
+      "less": "أقل",
+      "more": "أكثر"
+    },
+    "bookshelf": {
+      "title_one": "رفي ({{count}})",
+      "title_other": "رفي ({{count}})"
+    },
+    "engagement": {
+      "title": "التفاعل"
     },
     "themeValues": {
       "system": "تلقائي",
@@ -175,7 +226,9 @@
       "dark": "داكن"
     },
     "signOut": "تسجيل الخروج",
-    "signOutAria": "تسجيل الخروج من الحساب"
+    "signOutAria": "تسجيل الخروج من الحساب",
+    "deleteAccount": "حذف حسابي",
+    "deleteAccountAria": "حذف حسابي نهائيًا"
   },
   "cup": {
     "title": "الكأس",

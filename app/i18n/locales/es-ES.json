@@ -149,6 +149,10 @@
       "theme": "tema",
       "language": "idioma",
       "vibration": "vibración",
+      "publicProfile": "perfil público",
+      "shareHabits": "compartir todos los hábitos",
+      "likedEditions": "ediciones que me gustan",
+      "notificationPrefs": "preferencias de notificación",
       "blockedUsers": "usuarios bloqueados",
       "privacy": "política de privacidad"
     },
@@ -162,9 +166,56 @@
       "title": "Idioma"
     },
     "profile": {
+      "defineUsername": "@definir nombre de usuario",
+      "memberSince": "Miembro desde {{date}}",
+      "addSocials": "Agregar redes sociales",
+      "followers": "seguidores",
+      "following": "siguiendo",
+      "share": "Compartir perfil",
       "streak": "racha",
       "editions": "ediciones",
       "bestStreak": "mejor racha"
+    },
+    "recentActivity": {
+      "title": "Actividad Reciente",
+      "habitComplete": "Completó hábito: {{name}}",
+      "editionRead": "Leyó la edición {{name}}"
+    },
+    "verification": {
+      "title": "Insignia Verificado",
+      "subtitle": "Completa los desafíos para obtener la insignia azul",
+      "bookReading": "Horas leyendo libros",
+      "editionsRead": "Ediciones leídas",
+      "streakRecord": "Días de racha",
+      "habitsCompleted": "Hábitos completados",
+      "appOpens": "Aperturas del app",
+      "inviteFriends": "Amigos invitados",
+      "totalProgress": "Progreso total:",
+      "invite": "Invitar"
+    },
+    "performance": {
+      "title": "Tu Rendimiento",
+      "subtitle": "Consulta tu desempeño general",
+      "streak": "Racha",
+      "books": "Libros",
+      "habits": "Hábitos"
+    },
+    "habitsToday": {
+      "title": "Hábitos de Hoy"
+    },
+    "activityGrid": {
+      "title": "Tu Actividad",
+      "days_one": "{{count}} día de actividad",
+      "days_other": "{{count}} días de actividad",
+      "less": "menos",
+      "more": "más"
+    },
+    "bookshelf": {
+      "title_one": "Mi Estante ({{count}})",
+      "title_other": "Mi Estante ({{count}})"
+    },
+    "engagement": {
+      "title": "Engagement"
     },
     "themeValues": {
       "system": "automático",
@@ -172,7 +223,9 @@
       "dark": "oscuro"
     },
     "signOut": "cerrar sesión",
-    "signOutAria": "Cerrar sesión de la cuenta"
+    "signOutAria": "Cerrar sesión de la cuenta",
+    "deleteAccount": "eliminar mi cuenta",
+    "deleteAccountAria": "Eliminar mi cuenta permanentemente"
   },
   "cup": {
     "title": "Copa",

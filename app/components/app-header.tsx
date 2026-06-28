@@ -28,7 +28,7 @@ export function AppHeader() {
   return (
     <header
       role="banner"
-      className="fixed top-0 inset-x-0 z-40 flex items-center justify-between h-14 px-4 bg-chrome-bg border-b border-chrome-border"
+      className="shrink-0 flex items-center justify-between h-14 px-4 bg-chrome-bg border-b border-chrome-border"
     >
       {/* Brand logo */}
       <NavLink
