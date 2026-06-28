@@ -1,14 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import { ComarkClient } from '@comark/react'
+import { useLoaderData } from 'react-router'
 import { IoFlash } from 'react-icons/io5'
 import { CategoryTabs } from '~/components/category-tabs'
 import { ReadingProgress } from '~/components/reading-progress'
 import { XpToast } from '~/components/xp-toast'
 import { RatingSheet, ContinueSheet } from '~/components/rating-sheet'
 import { QuizScreen } from '~/components/quiz-screen'
-import { editionComponents } from '~/components/edition-components'
-import { getRawEdition, parseEdition } from '~/data/content-loader'
+import { EditionHtml } from '~/components/edition-html'
+import { fetchEditions, buildEditionMap, type EditionMap } from '~/data/api'
 import { getCategory, getQuiz } from '~/data/editions'
 
 export function meta() {
@@ -18,59 +17,80 @@ export function meta() {
   ]
 }
 
-/* ─── Date header (non-main categories) ────────────────────────── */
+/* ─── Loader ─────────────────────────────────────────────────────────
+   Runs server-side in SSR, client-side in SPA. Fetches the public
+   /api/mobile/editions endpoint (no auth required) and maps each
+   edition to its category slug via cadernoId.
+──────────────────────────────────────────────────────────────────────── */
 
-function DateHeader({ date, readOnlineUrl }: { date?: string; readOnlineUrl?: string }) {
-  if (!date) return null
+export async function loader() {
+  const editions = await fetchEditions()
+  const editionMap = buildEditionMap(editions)
+  return { editionMap }
+}
+
+/* ─── Date + link header (non-main categories) ───────────────────── */
+
+function DateHeader({ subtitle, webUrl }: { subtitle: string | null; webUrl: string }) {
+  if (!subtitle) return null
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3 border-l-4 border-brand bg-brand/5 mx-0 my-4">
-      <span className="text-[13px] font-medium text-chrome-text">{date}</span>
-      {readOnlineUrl && readOnlineUrl !== '#' && (
-        <a
-          href={readOnlineUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[12px] text-brand font-bold shrink-0"
-        >
-          Leia Online ↗
-        </a>
-      )}
+      <span className="text-[13px] font-medium text-chrome-text">{subtitle}</span>
+      <a
+        href={webUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-[12px] text-brand font-bold shrink-0"
+      >
+        Leia Online ↗
+      </a>
     </div>
   )
 }
 
-/* ─── Edition content (comark MDC renderer) ─────────────────────── */
+/* ─── Edition content ────────────────────────────────────────────── */
 
-function EditionContent({ slug, isMain }: { slug: string; isMain: boolean }) {
-  const { i18n } = useTranslation()
-  const raw = getRawEdition(slug, i18n.language)
+function EmptyEdition() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center gap-4">
+      <span className="text-5xl" aria-hidden="true">📰</span>
+      <p className="text-chrome-muted text-[15px]">
+        Nenhuma edição disponível hoje para esta categoria.
+      </p>
+    </div>
+  )
+}
 
-  if (!raw) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center gap-4">
-        <span className="text-5xl" aria-hidden="true">📰</span>
-        <p className="text-chrome-muted text-[15px]">
-          Edição não disponível para esta categoria.
-        </p>
-      </div>
-    )
-  }
+function EditionContent({
+  editionMap,
+  activeSlug,
+  isMain,
+}: {
+  editionMap: EditionMap
+  activeSlug: string
+  isMain: boolean
+}) {
+  const edition = editionMap[activeSlug]
+  const category = getCategory(activeSlug)
+  const primaryColor = category?.dotColor ?? '#F97316'
 
-  const { frontmatter, content } = parseEdition(raw)
+  if (!edition) return <EmptyEdition />
 
   return (
     <>
-      {!isMain && <DateHeader date={frontmatter.date} readOnlineUrl={frontmatter.readOnlineUrl} />}
-      <ComarkClient
-        markdown={content}
-        components={editionComponents}
-        className="px-4 pb-8"
+      {!isMain && (
+        <DateHeader subtitle={edition.subtitle} webUrl={edition.webUrl} />
+      )}
+      <EditionHtml
+        html={edition.htmlContent}
+        primaryColor={primaryColor}
+        className="pb-8"
       />
     </>
   )
 }
 
-/* ─── Floating quiz button (non-main categories) ───────────────── */
+/* ─── Floating quiz button ───────────────────────────────────────── */
 
 function FloatingQuizButton({ onClick }: { onClick: () => void }) {
   const [visible, setVisible] = useState(false)
@@ -101,9 +121,10 @@ function FloatingQuizButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-/* ─── Home page ────────────────────────────────────────────────── */
+/* ─── Home page ──────────────────────────────────────────────────── */
 
 export default function Home() {
+  const { editionMap } = useLoaderData<typeof loader>()
   const [activeSlug, setActiveSlug] = useState('the-news')
   const contentRef = useRef<HTMLElement>(null)
 
@@ -115,7 +136,6 @@ export default function Home() {
 
   const activeCategory = getCategory(activeSlug)
   const quiz = getQuiz(activeSlug) ?? getQuiz('the-news')
-
   const isMainCategory = activeCategory?.hasReadingProgress ?? false
 
   function handleCategorySelect(slug: string) {
@@ -165,7 +185,11 @@ export default function Home() {
         aria-label="Edição do the news"
         className="bg-chrome-bg min-h-screen"
       >
-        <EditionContent slug={activeSlug} isMain={isMainCategory} />
+        <EditionContent
+          editionMap={editionMap}
+          activeSlug={activeSlug}
+          isMain={isMainCategory}
+        />
       </article>
 
       <RatingSheet
