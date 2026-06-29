@@ -156,9 +156,11 @@ function FloatingQuizButton({ onClick }: { onClick: () => void }) {
 function NavCard({
   edition,
   direction,
+  currentEdition,
 }: {
   edition: Edition
   direction: 'prev' | 'next'
+  currentEdition: Edition
 }) {
   const catSlug = categorySlugFromCaderno(edition.cadernoId)
   const category = getCategory(catSlug)
@@ -170,10 +172,16 @@ function NavCard({
       })
     : null
 
+  // Pass the current edition as the known neighbor in state so the target page
+  // renders the correct adjacent link instantly — without waiting for the loader.
+  const linkState = isNext
+    ? { edition, prev: currentEdition }   // target's "prev" (older) = us
+    : { edition, next: currentEdition }   // target's "next" (newer) = us
+
   return (
     <Link
       to={`/${edition.slug}`}
-      state={{ edition }}
+      state={linkState}
       className={[
         'flex flex-col gap-2 p-4 rounded-xl border border-chrome-divider bg-chrome-surface',
         'hover:border-chrome-muted transition-colors group',
@@ -207,7 +215,15 @@ function NavCard({
   )
 }
 
-function EditionNav({ prev, next }: { prev: Edition | null; next: Edition | null }) {
+function EditionNav({
+  prev,
+  next,
+  current,
+}: {
+  prev: Edition | null
+  next: Edition | null
+  current: Edition
+}) {
   if (!prev && !next) return null
 
   return (
@@ -217,11 +233,11 @@ function EditionNav({ prev, next }: { prev: Edition | null; next: Edition | null
       </p>
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
         {prev ? (
-          <NavCard edition={prev} direction="prev" />
+          <NavCard edition={prev} direction="prev" currentEdition={current} />
         ) : (
           <div aria-hidden="true" />
         )}
-        {next && <NavCard edition={next} direction="next" />}
+        {next && <NavCard edition={next} direction="next" currentEdition={current} />}
       </div>
     </nav>
   )
@@ -253,10 +269,17 @@ export default function EditionDetail() {
   const loaderData = useLoaderData<typeof loader>()
   const location = useLocation()
 
-  // Client nav passes full edition via Link state (avoids re-fetch + cache miss)
-  const stateEdition = (location.state as { edition?: Edition } | null)?.edition
-  const edition = stateEdition ?? loaderData.edition
-  const { prev, next } = loaderData
+  // Client nav passes edition (and optionally known neighbors) via Link state for
+  // instant display — avoids a loader round-trip for data we already have.
+  const stateData = location.state as {
+    edition?: Edition
+    prev?: Edition | null
+    next?: Edition | null
+  } | null
+  const edition = stateData?.edition ?? loaderData.edition
+  // State neighbors are optimistic (instant); loaderData fills the unknown side.
+  const prev = stateData && 'prev' in stateData ? stateData.prev : loaderData.prev
+  const next = stateData && 'next' in stateData ? stateData.next : loaderData.next
 
   const catSlug = edition ? categorySlugFromCaderno(edition.cadernoId) : 'the-news'
   const category = getCategory(catSlug)
@@ -324,7 +347,7 @@ export default function EditionDetail() {
         />
       </article>
 
-      <EditionNav prev={prev} next={next} />
+      {edition && <EditionNav prev={prev ?? null} next={next ?? null} current={edition} />}
 
       <RatingSheet
         open={ratingOpen}

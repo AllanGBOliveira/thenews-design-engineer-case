@@ -619,10 +619,13 @@ export default function Home() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {displayed.map((edition) => (
+              {displayed.map((edition, idx) => (
                 <EditionCard
                   key={edition.id}
                   edition={edition}
+                  // displayed is newest-first: lower idx = newer (next), higher = older (prev)
+                  nextEdition={idx > 0 ? displayed[idx - 1] : null}
+                  prevEdition={idx < displayed.length - 1 ? displayed[idx + 1] : null}
                   onTagClick={(tag) => {
                     const next = activeTags.includes(tag)
                       ? activeTags.filter((t) => t !== tag)

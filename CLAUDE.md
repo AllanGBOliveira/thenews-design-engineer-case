@@ -10,14 +10,15 @@ This is the bonus deliverable for the **the news** (thenewscc.com.br) selection 
 
 The challenge requires redesigning at least 2 screens of the app and optionally implementing them in React with responsive mobile layout, deployed to a public URL.
 
-**Primary screens (core deliverable):**
-- **Home / Feed** — edition listing with category filtering, replacing the current flow that drops the user directly into a post slug with no content discovery layer
-- **Habits** — calendar + streak gamification system, expanded with multiple habit types beyond reading
+**Primary screens (final deliverable):**
+- **Home / Feed** (`/`) — edition listing with search, pagination, per-page selector, client-side filters (newsletter, period, audience, content tags), sort by recency/views/likes/comments
+- **Edition detail** (`/:slug`) — full newsletter post with reading progress, rating/quiz post-read flow, and prev/next post navigation
 
-**Stretch screen (if time allows):**
-- **Books** — natural extension of the expanded Habits screen; mentioned as a next step in the design decisions document but not a committed deliverable
+**Why these two screens:**
+The public API returns rich, real data for editions (`/api/mobile/editions`), which made it possible to build a fully functional, data-driven implementation rather than a static mockup. The Home and Edition screens are the core content loop of any media app: discovery → reading. They attack the two metrics that matter most: content engagement (Home) and session depth (Edition).
 
-The Home and Habits screens were selected because they attack the two core product metrics of a media startup: content engagement (Home/discovery) and daily retention (Habits/streak). Books is documented as the logical product evolution, not a fallback.
+**Habits and Books — documented as proposals, not implemented:**
+Habits and Books were originally considered but deferred. The Habits API requires authentication (`GET /user/habits`) and returns no data without an auth token — a static mockup was the only viable path, and it adds less value than a data-driven implementation. These are documented as written proposals in the design decisions document to show product thinking (how the gamification system would work, what the Books feature would look like) without spending implementation time on static screens that can't be validated with real data.
 
 ---
 
@@ -257,6 +258,19 @@ The public API (without auth) only supports **three real params**: `page`, `limi
 |---|---|---|
 | `?limit=` | API page size | `?limit=10` (omit for default 20) |
 
+### Prev/next post navigation — optimistic state pattern
+
+Each edition detail page shows "Post anterior" (older) and "Próximo post" (newer) nav cards at the bottom.
+
+**Position tracking (`_positionMap`):** `cacheEditions(editions, page, limit)` records every edition's feed position as `{ page, idx, limit }`. `fetchEditionWithNeighbors` checks this map first — O(1) jump to the right page — instead of searching 5 pages linearly. Falls back to linear search for direct URL accesses (cold cache).
+
+**Reactive nav without loader flicker:** React Router's `useLoaderData()` returns the PREVIOUS route's data until the new loader completes. If the component only read `loaderData.prev/next`, there'd be a brief flash of wrong neighbors during navigation. The fix is a two-layer read:
+
+1. **State layer (instant):** `Link state={{ edition, prev, next }}`. When navigating from home, the card passes both neighbors. When clicking a NavCard, it passes the current edition as the one known neighbor on the target side.
+2. **Loader layer (async):** `fetchEditionWithNeighbors` fills the unknown neighbor (and serves as the single source of truth for direct URL access and SSR).
+
+The component reads: `prev = 'prev' in state ? state.prev : loaderData.prev` (same for `next`). This way the known neighbor is always instant, and only the unknown one waits for the loader.
+
 ### Per-edition quiz keying
 
 Quizzes live in `QUIZZES: Quiz[]` in `app/data/editions.ts`, keyed by `edition.slug` (the exact URL slug returned by the API — e.g. `"sunday-s-edition-28-06"`). `getQuiz(slug)` returns `undefined` for editions without a quiz, which hides the quiz button and removes the "Fazer o quiz" CTA from the post-reading `ContinueSheet`.
@@ -270,10 +284,11 @@ If blog posts are added to this project, [comark.dev](https://comark.dev) is a c
 
 ## What Is Out of Scope
 
+- Habits screen (auth-gated API, documented as a written proposal only)
+- Books screen (documented as a written proposal only)
 - Full onboarding flow
 - Authentication screens
 - Settings screens
-- Books screen (stretch goal — implemented only if time allows after Home and Habits are polished)
 - Google Calendar integration (documented as a "next steps" proposal in the design decisions document, not implemented)
 - AI chat feature (mentioned as a future product evolution idea, not part of the deliverable)
 

@@ -86,9 +86,18 @@ export function parseEditionAuthors(raw: string): string[] {
 const _cache = new Map<string, Edition>()
 const _listCache = new Map<string, { result: EditionListResult; ts: number }>()
 
-export function cacheEditions(editions: Edition[]): void {
-  for (const e of editions) {
+// Tracks the page/index position of every edition that has appeared in a list
+// fetch. Used by fetchEditionWithNeighbors for O(1) page targeting instead of
+// a linear page-by-page search.
+const _positionMap = new Map<string, { page: number; idx: number; limit: number }>()
+
+export function cacheEditions(editions: Edition[], page?: number, limit?: number): void {
+  for (let i = 0; i < editions.length; i++) {
+    const e = editions[i]
     _cache.set(e.slug, e)
+    if (page !== undefined && limit !== undefined) {
+      _positionMap.set(e.slug, { page, idx: i, limit })
+    }
   }
   if (_cache.size > 200) {
     let excess = _cache.size - 200
@@ -139,7 +148,7 @@ export async function fetchEditionsList({
     }
 
     const editions = (Array.isArray(json.data) ? json.data : []).filter((e) => !e.hiddenFromFeed)
-    cacheEditions(editions)
+    cacheEditions(editions, page, safeLimit)
 
     const result: EditionListResult = {
       editions,
@@ -178,46 +187,78 @@ export async function fetchEditionBySlug(slug: string): Promise<Edition | null> 
 
 export type EditionWithNeighbors = {
   edition: Edition | null
-  // older edition (published before this one)
+  // older edition (published before this one in time)
   prev: Edition | null
-  // newer edition (published after this one)
+  // newer edition (published after this one in time)
   next: Edition | null
 }
 
-// Returns the edition plus its immediate neighbors in the feed (newest-first API order).
-// Fetches the neighboring page when the edition lands at a page boundary.
-export async function fetchEditionWithNeighbors(slug: string): Promise<EditionWithNeighbors> {
-  for (let page = 1; page <= 5; page++) {
+// Resolve neighbors for a given page+index, fetching boundary pages separately.
+async function resolveNeighbors(
+  editions: Edition[],
+  idx: number,
+  page: number,
+  totalPages: number,
+  limit: number,
+): Promise<{ prev: Edition | null; next: Edition | null }> {
+  // API returns newest-first: lower index = newer (next), higher index = older (prev)
+  let next: Edition | null = idx > 0 ? editions[idx - 1] : null
+  let prev: Edition | null = idx < editions.length - 1 ? editions[idx + 1] : null
+
+  if (!next && page > 1) {
     try {
-      const { editions, pagination } = await fetchEditionsList({ page })
+      const p = await fetchEditionsList({ page: page - 1, limit: limit as PageSize })
+      next = p.editions[p.editions.length - 1] ?? null
+    } catch { /* no newer neighbor available */ }
+  }
+  if (!prev && page < totalPages) {
+    try {
+      const p = await fetchEditionsList({ page: page + 1, limit: limit as PageSize })
+      prev = p.editions[0] ?? null
+    } catch { /* no older neighbor available */ }
+  }
+  return { prev, next }
+}
+
+// Returns the edition plus its immediate neighbors in the feed (newest-first API
+// order). Uses _positionMap for O(1) page targeting when available; falls back
+// to a linear page-by-page search for direct URL accesses.
+export async function fetchEditionWithNeighbors(slug: string): Promise<EditionWithNeighbors> {
+  // Fast path: known position from a prior list fetch
+  const pos = _positionMap.get(slug)
+  if (pos) {
+    try {
+      const { editions, pagination } = await fetchEditionsList({ page: pos.page, limit: pos.limit as PageSize })
       const idx = editions.findIndex((e) => e.slug === slug)
-
-      if (idx === -1) {
-        if (page >= pagination.totalPages || editions.length < pagination.limit) break
-        continue
+      if (idx !== -1) {
+        const { prev, next } = await resolveNeighbors(editions, idx, pos.page, pagination.totalPages, pos.limit)
+        return { edition: editions[idx], prev, next }
       }
+      // Position was stale (list refreshed) — fall through to linear search
+    } catch { /* fall through */ }
+  }
 
-      // API is newest-first: lower index = newer, higher index = older
-      let next: Edition | null = idx > 0 ? editions[idx - 1] : null
-      let prev: Edition | null = idx < editions.length - 1 ? editions[idx + 1] : null
-
-      // Edge of page — fetch the neighboring page to fill the gap
-      if (!next && page > 1) {
-        const prevPage = await fetchEditionsList({ page: page - 1 })
-        next = prevPage.editions[prevPage.editions.length - 1] ?? null
-      }
-      if (!prev && page < pagination.totalPages) {
-        const nextPage = await fetchEditionsList({ page: page + 1 })
-        prev = nextPage.editions[0] ?? null
-      }
-
-      return { edition: editions[idx], prev, next }
+  // Slow path: search up to 5 pages (covers 100 most recent editions at limit=20)
+  for (let page = 1; page <= 5; page++) {
+    let editions: Edition[]
+    let pagination: PaginationMeta
+    try {
+      ;({ editions, pagination } = await fetchEditionsList({ page }))
     } catch {
       break
     }
+
+    const idx = editions.findIndex((e) => e.slug === slug)
+    if (idx === -1) {
+      if (page >= pagination.totalPages || editions.length < pagination.limit) break
+      continue
+    }
+
+    const { prev, next } = await resolveNeighbors(editions, idx, page, pagination.totalPages, DEFAULT_PAGE_SIZE)
+    return { edition: editions[idx], prev, next }
   }
 
-  // Fell through: edition not in recent pages but may still be in slug cache
+  // Last resort: return cached edition without neighbors
   const cached = getCachedEdition(slug)
   return { edition: cached ?? null, prev: null, next: null }
 }

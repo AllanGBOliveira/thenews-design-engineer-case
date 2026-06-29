@@ -109,16 +109,19 @@ type EditionCardProps = {
   edition: Edition
   onTagClick?: (tag: string) => void
   activeTags?: string[]
+  // Adjacent editions passed as state so the detail page renders nav instantly.
+  prevEdition?: Edition | null
+  nextEdition?: Edition | null
 }
 
-export function EditionCard({ edition, onTagClick, activeTags = [] }: EditionCardProps) {
+export function EditionCard({ edition, onTagClick, activeTags = [], prevEdition, nextEdition }: EditionCardProps) {
   const tags = parseEditionTags(edition.contentTags)
   const authors = parseEditionAuthors(edition.authors)
 
   return (
     <Link
       to={`/${edition.slug}`}
-      state={{ edition }}
+      state={{ edition, prev: prevEdition ?? null, next: nextEdition ?? null }}
       className="group flex flex-col h-full overflow-hidden rounded-xl border border-chrome-divider bg-chrome-surface hover:border-chrome-muted transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
       {/* Thumbnail — flush, no top padding */}
