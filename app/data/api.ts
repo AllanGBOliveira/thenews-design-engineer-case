@@ -105,25 +105,32 @@ export function getCachedEdition(slug: string): Edition | undefined {
 
 /* ─── API calls ──────────────────────────────────────────────────────────── */
 
+export const PAGE_SIZE_OPTIONS = [5, 10, 15, 20] as const
+export type PageSize = (typeof PAGE_SIZE_OPTIONS)[number]
+export const DEFAULT_PAGE_SIZE: PageSize = 20
+
 type FetchListParams = {
   page?: number
   search?: string
+  limit?: number
 }
 
 export async function fetchEditionsList({
   page = 1,
   search = '',
+  limit = DEFAULT_PAGE_SIZE,
 }: FetchListParams = {}): Promise<EditionListResult> {
-  const cacheKey = `${page}:${search}`
+  const safeLimit = Math.min(20, Math.max(1, limit))
+  const cacheKey = `${page}:${search}:${safeLimit}`
   const hit = _listCache.get(cacheKey)
   if (hit && Date.now() - hit.ts < 30_000) return hit.result
 
   try {
-    const params = new URLSearchParams({ page: String(page) })
+    const params = new URLSearchParams({ page: String(page), limit: String(safeLimit) })
     if (search) params.set('search', search)
 
     const res = await fetch(`${MOBILE_API}/editions?${params}`)
-    if (!res.ok) return emptyResult(page)
+    if (!res.ok) return emptyResult(page, safeLimit)
 
     const json = await res.json() as {
       success: boolean
@@ -136,17 +143,17 @@ export async function fetchEditionsList({
 
     const result: EditionListResult = {
       editions,
-      pagination: json.pagination ?? { page, limit: 10, total: 0, totalPages: 0 },
+      pagination: json.pagination ?? { page, limit: safeLimit, total: 0, totalPages: 0 },
     }
     _listCache.set(cacheKey, { result, ts: Date.now() })
     return result
   } catch {
-    return emptyResult(page)
+    return emptyResult(page, safeLimit)
   }
 }
 
-function emptyResult(page: number): EditionListResult {
-  return { editions: [], pagination: { page, limit: 10, total: 0, totalPages: 0 } }
+function emptyResult(page: number, limit: number = DEFAULT_PAGE_SIZE): EditionListResult {
+  return { editions: [], pagination: { page, limit, total: 0, totalPages: 0 } }
 }
 
 // For edition detail: check cache first, then paginate through recent pages.

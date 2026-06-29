@@ -256,6 +256,7 @@ export default function EditionDetail() {
         open={continueOpen}
         onClose={() => setContinueOpen(false)}
         onQuiz={handleQuizOpen}
+        hasQuiz={!!quiz}
       />
       <QuizScreen
         quiz={quiz}

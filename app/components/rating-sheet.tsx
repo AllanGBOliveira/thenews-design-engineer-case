@@ -181,9 +181,10 @@ type ContinueSheetProps = {
   open: boolean
   onClose: () => void
   onQuiz: () => void
+  hasQuiz?: boolean
 }
 
-export function ContinueSheet({ open, onClose, onQuiz }: ContinueSheetProps) {
+export function ContinueSheet({ open, onClose, onQuiz, hasQuiz = false }: ContinueSheetProps) {
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
@@ -225,13 +226,15 @@ export function ContinueSheet({ open, onClose, onQuiz }: ContinueSheetProps) {
 
         {/* Actions */}
         <div className="px-4 space-y-2">
-          <button
-            type="button"
-            onClick={onQuiz}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand text-[#0A0A0F] font-bold text-[15px] hover:bg-brand-dim transition-colors"
-          >
-            <span aria-hidden="true">✦</span> Fazer o quiz
-          </button>
+          {hasQuiz && (
+            <button
+              type="button"
+              onClick={onQuiz}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand text-[#0A0A0F] font-bold text-[15px] hover:bg-brand-dim transition-colors"
+            >
+              <span aria-hidden="true">✦</span> Fazer o quiz
+            </button>
+          )}
           <div className="flex gap-2">
             <button
               type="button"

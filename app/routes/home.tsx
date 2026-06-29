@@ -12,7 +12,7 @@ import {
 } from '~/components/ui/select'
 import { EditionCard, EditionCardSkeleton } from '~/components/edition-card'
 import { InterestsPicker, PERIOD_LABELS } from '~/components/interests-picker'
-import { fetchEditionsList, categorySlugFromCaderno, parseEditionTags } from '~/data/api'
+import { fetchEditionsList, categorySlugFromCaderno, parseEditionTags, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '~/data/api'
 import { getCategory } from '~/data/editions'
 
 /* ─── Meta ───────────────────────────────────────────────────────────────── */
@@ -30,8 +30,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url)
   const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1)
   const q = url.searchParams.get('q') ?? ''
-  const { editions, pagination } = await fetchEditionsList({ page, search: q.trim() })
-  return { editions, pagination, page, q }
+  const limitParam = parseInt(url.searchParams.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10)
+  const limit = (PAGE_SIZE_OPTIONS.includes(limitParam as PageSize) ? limitParam : DEFAULT_PAGE_SIZE) as PageSize
+  const { editions, pagination } = await fetchEditionsList({ page, search: q.trim(), limit })
+  return { editions, pagination, page, q, limit }
 }
 
 /* ─── Sort options ───────────────────────────────────────────────────────── */
@@ -94,6 +96,12 @@ function useUrlFilters() {
     [setParams],
   )
 
+  const limit = (PAGE_SIZE_OPTIONS.includes(
+    parseInt(params.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10) as PageSize,
+  )
+    ? parseInt(params.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10)
+    : DEFAULT_PAGE_SIZE) as PageSize
+
   // Page changes — push history (enables browser back)
   const goToPage = useCallback(
     (n: number) => {
@@ -108,6 +116,20 @@ function useUrlFilters() {
     [setParams],
   )
 
+  // Limit change resets to page 1
+  const setLimit = useCallback(
+    (n: PageSize) => {
+      setParams((prev) => {
+        const next = new URLSearchParams(prev)
+        if (n !== DEFAULT_PAGE_SIZE) next.set('limit', String(n))
+        else next.delete('limit')
+        next.delete('page')
+        return next
+      }, { replace: true })
+    },
+    [setParams],
+  )
+
   const clearFilters = useCallback(() => {
     setParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -118,6 +140,7 @@ function useUrlFilters() {
       next.delete('period')
       next.delete('audience')
       next.delete('page')
+      // limit is intentionally preserved — it's a display preference, not a filter
       return next
     }, { replace: true })
   }, [setParams])
@@ -125,7 +148,7 @@ function useUrlFilters() {
   const hasClientFilters =
     activeTags.length > 0 || activeInterests.length > 0 || !!activePeriod || !!activeAudience
 
-  return { q, sort, activeTags, activeInterests, activePeriod, activeAudience, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters }
+  return { q, sort, activeTags, activeInterests, activePeriod, activeAudience, page, limit, setFilter, setFilters, setLimit, goToPage, clearFilters, hasClientFilters }
 }
 
 /* ─── Search input (debounced URL update) ────────────────────────────────── */
@@ -199,8 +222,10 @@ function Toolbar({
   activeInterests,
   activePeriod,
   activeAudience,
+  limit,
   setFilter,
   setFilters,
+  setLimit,
   onOpenPicker,
 }: {
   q: string
@@ -209,8 +234,10 @@ function Toolbar({
   activeInterests: string[]
   activePeriod: string | undefined
   activeAudience: string | undefined
+  limit: PageSize
   setFilter: (k: string, v: string | undefined) => void
   setFilters: (patch: Record<string, string | undefined>) => void
+  setLimit: (n: PageSize) => void
   onOpenPicker: () => void
 }) {
   const totalActive =
@@ -232,9 +259,11 @@ function Toolbar({
 
   return (
     <div className="sticky top-0 z-10 bg-chrome-bg border-b border-chrome-divider">
-      {/* Main row */}
+      {/* Main row: search → per-page → sort → filter */}
       <div className="flex items-center gap-2 px-3 py-2">
         <SearchInput q={q} setFilter={setFilter} />
+
+        <PerPageSelect limit={limit} setLimit={setLimit} />
 
         <Select
           value={sort}
@@ -336,6 +365,31 @@ function Toolbar({
         </div>
       )}
     </div>
+  )
+}
+
+/* ─── Per-page selector ──────────────────────────────────────────────────── */
+
+function PerPageSelect({ limit, setLimit }: { limit: PageSize; setLimit: (n: PageSize) => void }) {
+  return (
+    <Select
+      value={String(limit)}
+      onValueChange={(v) => setLimit(Number(v) as PageSize)}
+    >
+      <SelectTrigger
+        className="h-9 w-[68px] shrink-0 text-[12px] bg-chrome-surface border-chrome-divider text-chrome-text rounded-xl gap-1 focus:ring-brand"
+        aria-label="Itens por página"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent className="bg-chrome-surface border-chrome-divider text-chrome-text">
+        {PAGE_SIZE_OPTIONS.map((n) => (
+          <SelectItem key={n} value={String(n)} className="text-[13px] focus:bg-brand/10">
+            {n} / pág
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   )
 }
 
@@ -463,7 +517,7 @@ function getPeriodCutoff(period: string): Date | null {
 
 export default function Home() {
   const { editions, pagination } = useLoaderData<typeof loader>()
-  const { q, sort, activeTags, activeInterests, activePeriod, activeAudience, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters } =
+  const { q, sort, activeTags, activeInterests, activePeriod, activeAudience, page, limit, setFilter, setFilters, setLimit, goToPage, clearFilters, hasClientFilters } =
     useUrlFilters()
 
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -532,8 +586,10 @@ export default function Home() {
         activeInterests={activeInterests}
         activePeriod={activePeriod}
         activeAudience={activeAudience}
+        limit={limit}
         setFilter={setFilter}
         setFilters={setFilters}
+        setLimit={setLimit}
         onOpenPicker={() => setPickerOpen(true)}
       />
 
@@ -543,9 +599,13 @@ export default function Home() {
         <div className="py-4 pb-3">
           <h1 className="text-chrome-text font-black text-[22px] leading-none">seu feed</h1>
           <p className="text-chrome-muted text-[13px] mt-1">
-            {pagination.total > 0
-              ? `${pagination.total.toLocaleString('pt-BR')} edições`
-              : '…'}
+            {hasClientFilters
+              ? `${displayed.length} de ${editions.length} nesta página`
+              : pagination.total > 0
+                ? `${pagination.total.toLocaleString('pt-BR')} edições`
+                : q
+                  ? 'nenhum resultado'
+                  : '…'}
             {activeInterests.length > 0 &&
               ` · ${activeInterests.length} newsletter${activeInterests.length > 1 ? 's' : ''}`}
             {activeTags.length > 0 && ` · ${activeTags.length} tag${activeTags.length > 1 ? 's' : ''}`}
@@ -574,19 +634,27 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Pagination — API-level only; hide when client-side filter narrows results */}
-            {!hasClientFilters && (
+            {/* Pagination */}
+            {!hasClientFilters ? (
               <Pagination
                 page={page}
                 totalPages={pagination.totalPages}
                 onPage={goToPage}
               />
-            )}
-
-            {hasClientFilters && pagination.totalPages > 1 && (
-              <p className="text-center text-chrome-muted text-[12px] py-4">
-                Filtros ativos nesta página · use a busca para pesquisar em todas as {pagination.totalPages} páginas
-              </p>
+            ) : (
+              pagination.totalPages > 1 && (
+                <p className="text-center text-chrome-muted text-[12px] py-6">
+                  Filtros aplicados à pág. {page} · use a busca{' '}
+                  <button
+                    type="button"
+                    className="underline hover:text-chrome-text transition-colors"
+                    onClick={clearFilters}
+                  >
+                    ou limpe os filtros
+                  </button>{' '}
+                  para ver todas as {pagination.totalPages} páginas
+                </p>
+              )
             )}
           </>
         )}

@@ -198,6 +198,71 @@ PWA is implemented via `vite-plugin-pwa` + `@vite-pwa/assets-generator`:
 - **Husky** (`.husky/commit-msg`): runs `commitlint` locally before every commit, enforcing Conventional Commits format.
 - **typecheck script:** `react-router typegen && tsc` — generates React Router types then type-checks the whole project.
 
+### Local-first data: IndexedDB (not localStorage)
+
+All persistent client-side app data goes in IndexedDB. Cookies handle only SSR-critical state (theme, locale) because they ride HTTP headers and are readable server-side. IndexedDB is never touched during SSR — all access is guarded by client-only hooks.
+
+**`app/lib/db.ts`** — versioned schema manager:
+- `DB_NAME = 'thenews-db'`, `DB_VERSION = 1`
+- `MIGRATIONS` record maps version number → migration function. Bump `DB_VERSION` and add an entry to `MIGRATIONS` when adding stores or indexes — `onupgradeneeded` runs only the delta.
+- Generic CRUD exports: `dbGet`, `dbPut`, `dbDelete`, `dbGetAll` — all return `Promise`, all SSR-safe (guard: `typeof indexedDB === 'undefined'`).
+- Typed helpers per domain: `getReadingProgress`, `saveReadingProgress`, `getAllReadingProgress`, `deleteReadingProgress`.
+
+**Current schema (v1):**
+
+| Store | keyPath | Indexes | Purpose |
+|---|---|---|---|
+| `readingProgress` | `editionId` | `slug`, `updatedAt`, `completed` | Per-edition scroll progress (0–100) |
+
+**`app/hooks/use-reading-progress.ts`** — React hook:
+- Loads saved progress from IndexedDB on mount (per `editionId`).
+- `update(pct)` only advances — never goes back; prevents indicator regression on scroll-up.
+- DB writes debounced at 300ms — avoids a write per scroll pixel.
+- Pending write flushed synchronously on unmount (covers navigating away mid-read).
+
+**Why not localStorage:** no SSR access, no structured querying, no versioned migrations, limited to string values.
+
+**Why not cookies for app data:** cookies are sent on every HTTP request — storing reading progress there would bloat every request header.
+
+### Client-side filtering strategy
+
+The public API (without auth) only supports **three real params**: `page`, `limit`, and `search`. Everything else — newsletter filter, period, audience, content tags, sort by views/likes/comments — is applied client-side to the current page's results.
+
+**Architectural consequences:**
+
+1. **`?limit=` URL param (5 / 10 / 15 / 20, default 20)** — the user chooses how many items per page via a `PerPageSelect` in the toolbar. The API caps at 20; values outside `PAGE_SIZE_OPTIONS` fall back to 20. `limit` is treated as a **display preference**, not a filter — `clearFilters()` deliberately does not reset it.
+
+2. **Pagination hides when client filters are active** — showing page numbers while filtering a single page's results is misleading. The callout instead explains the limitation and offers "limpe os filtros" inline. `?q=` (real server-side search) is the path to cross-page discovery.
+
+3. **Reactive subtitle** — when no client filters are active the subtitle shows the API total (`pagination.total`); when any client filter is active it shows `"X de Y nesta página"` so the user understands they're scoped to a single page.
+
+4. **Sort** (`?sort=views|likes|comments`) sorts the current page's items — not the entire corpus. This is the honest behavior given the API constraint. Sort by `newest` is the only meaningful full-corpus order (it's what the API returns).
+
+5. **`hiddenFromFeed`** — filtered out at fetch time in `fetchEditionsList`, before the list cache is populated. The pagination totals from the API will be slightly higher than what we display (the API counts hidden editions in `total`).
+
+6. **MiniSearch not used (yet)** — MiniSearch could index `subjectLine`, `previewText`, `contentTags` etc. of the loaded page and deliver full-text fuzzy search within the client-side filter pipeline without a server round-trip. Decided against it for now: the current exact-match pipeline is sufficient and the text search via `?q=` covers cross-page discovery. Re-evaluate if the filter UX needs fuzzy matching.
+
+**Client-side filter pipeline (applied in this order):**
+1. Newsletter/interest filter — `categorySlugFromCaderno(e.cadernoId)`
+2. Content tag filter — `parseEditionTags(e.contentTags)`
+3. Period filter — compare `e.publishDate` against `getPeriodCutoff(period)`
+4. Audience filter — `e.audience === 'free' | 'premium'`
+5. Sort — `viewsCount | likesCount | commentsCount` descending, or default (API order = newest)
+
+**Toolbar control order:** search → per-page select → sort select → filter dialog button. This order mirrors discovery intent: narrow the dataset first (search, page size), then sort and deep-filter.
+
+**`?limit=` in the URL state convention:**
+
+| Param | Where used | Example |
+|---|---|---|
+| `?limit=` | API page size | `?limit=10` (omit for default 20) |
+
+### Per-edition quiz keying
+
+Quizzes live in `QUIZZES: Quiz[]` in `app/data/editions.ts`, keyed by `edition.slug` (the exact URL slug returned by the API — e.g. `"sunday-s-edition-28-06"`). `getQuiz(slug)` returns `undefined` for editions without a quiz, which hides the quiz button and removes the "Fazer o quiz" CTA from the post-reading `ContinueSheet`.
+
+To add a quiz for any edition: append an entry to `QUIZZES` with `editionSlug` matching the API slug exactly. No other code changes needed.
+
 ### Blog posts: comark.dev (possible future use)
 If blog posts are added to this project, [comark.dev](https://comark.dev) is a candidate — it is React-compatible and offers MDX-like authoring without being tied to the Vue/Nuxt ecosystem (unlike `remark-mdc`). No decision made yet; this is noted as a future option only.
 
@@ -284,63 +349,72 @@ All endpoints are **unauthenticated** unless noted. No `Authorization` header re
 
 Paginated list of editions (newsletter posts) across all newsletters.
 
-**Confirmed working params:**
+**Confirmed working params** (verified by direct curl testing):
 
 | Param | Type | Description |
 |---|---|---|
 | `page` | integer ≥ 1 | Page number. Default: 1. |
+| `limit` | integer 1–20 | Items per page. **Silently capped at 20** — values above 20 return 20. Default: 10. We pass `?limit=` from the `PAGE_SIZE_OPTIONS` URL param (5/10/15/20, default 20). |
 | `search` | string | Full-text search on `subjectLine` + `previewText`. Returns matching editions across all newsletters and pages. |
 
-**Params that do NOT work (ignored by API):**
-- `sort`, `order`, `orderBy`, `direction` — no server-side sorting; the API always returns newest-first.
-- `cadernoId` — category filter without auth; returns same results as no filter.
-- `tags` — no tag filtering via API.
+**Params that do NOT work (confirmed ignored by API without auth):**
 
-**Response shape:**
+| Param | Tested values | Result |
+|---|---|---|
+| `sort` | `likes`, `views`, `publishDate` | Ignored — always returns newest-first |
+| `order` / `orderBy` / `direction` | `asc`, `desc` | Ignored |
+| `cadernoId` | full pub UUID | Ignored — returns mixed newsletters |
+| `audience` | `free`, `premium` | Ignored — returns both |
+| `tags` | tag strings | Ignored |
+| `perPage` / `pageSize` / `per_page` | any | Ignored — only `limit` works |
+
+**Response shape** (with `limit=20`):
 
 ```json
 {
   "success": true,
-  "data": [ /* Edition[] */ ],
+  "data": [ /* Edition[] — up to 20 items, hiddenFromFeed already filtered client-side */ ],
   "pagination": {
     "page": 1,
-    "limit": 10,
-    "total": 1409,
-    "totalPages": 141
+    "limit": 20,
+    "total": 1411,
+    "totalPages": 71
   }
 }
 ```
 
+**Important:** `pagination.total` includes editions with `hiddenFromFeed: true`. We filter those out after fetching, so the actual displayed count will be slightly lower than `total`.
+
 **Edition object fields:**
 
-| Field | Type | Notes |
-|---|---|---|
-| `id` | string | Internal ID, e.g. `"id_z0da1awuumqyy6gan"` |
-| `beehiivPostId` | string | Beehiiv post UUID |
-| `publicationId` | string | Same as `cadernoId` (newsletter identifier) |
-| `title` | string | Usually the date string e.g. `"29/06/2026"` — NOT the headline |
-| `subjectLine` | string | **The email subject / headline** — use this as the card title |
-| `previewText` | string | **Email preview text / subtitle** — use this as the card description (4-line clamp) |
-| `slug` | string | URL slug, e.g. `"sunday-s-edition-28-06"`. Used in `/editions/:slug` route. |
-| `thumbnailUrl` | string \| null | Cover image URL from Beehiiv S3. Many editions have no thumbnail. |
-| `webUrl` | string | Public URL on the newsletter's domain, e.g. `"https://health.thenews.com.br/p/29-06-2026"` |
-| `audience` | `"free"` \| `"premium"` | Premium posts require subscription |
-| `platform` | string | `"both"`, `"web"`, `"email"` |
-| `publishDate` | string | ISO date `"2026-06-29"` — use for display, NOT `publishedAt` |
-| `publishedAt` | string \| null | Full ISO datetime (often null) |
-| `isCurrentEdition` | boolean | True for today's edition — show "Hoje" badge |
-| `hiddenFromFeed` | boolean | Should be filtered out from listing if true |
-| `viewsCount` | integer | Page view count (zero for many non-the-news newsletters) |
-| `likesCount` | integer | Heart/like count |
-| `commentsCount` | integer | Comment count |
-| `cadernoId` | string | Newsletter identifier. Maps to category slug via `categorySlugFromCaderno()`. |
-| `contentTags` | string | **JSON string** e.g. `'["música","leitura","cinema"]'` or `'[]'`. Parse with `parseEditionTags()`. |
-| `authors` | string | **JSON string** e.g. `'["tempo de copa ⚽"]'` or `'[]'`. Parse with `parseEditionAuthors()`. |
-| `htmlContent` | string | Full sanitized HTML of the newsletter. Beehiiv email format — needs sanitization via `EditionHtml`. |
-| `beehiivCreatedAt` | integer | Unix timestamp |
-| `displayedDate` | null | Always null in observed responses |
-| `status` | string | `"confirmed"` etc. |
-| `fetchedAt` / `createdAt` / `updatedAt` | string | Internal DB timestamps |
+| Field | Type | Used? | Notes |
+|---|---|---|---|
+| `id` | string | ✅ | Internal ID, e.g. `"id_z0da1awuumqyy6gan"` — IndexedDB key for reading progress |
+| `slug` | string | ✅ | URL slug, e.g. `"sunday-s-edition-28-06"` — used in `/:slug` route and quiz keying |
+| `subjectLine` | string | ✅ | **The email subject / headline** — card title |
+| `previewText` | string | ✅ | **Email preview text** — card description, 4-line clamp |
+| `thumbnailUrl` | string \| null | ✅ | Cover image from Beehiiv S3. Many editions have no thumbnail — fallback gradient shown |
+| `webUrl` | string | ✅ | Public URL on newsletter domain — "Ler no site" link in detail header |
+| `audience` | `"free"` \| `"premium"` | ✅ | "Premium" badge in detail header; `?audience=` client-side filter |
+| `publishDate` | string | ✅ | ISO date `"2026-06-29"` — use for display and `?period=` filter. Prefer over `publishedAt` |
+| `isCurrentEdition` | boolean | ✅ | True for today's edition — "Hoje" badge on card |
+| `hiddenFromFeed` | boolean | ✅ | Filtered out at fetch time in `fetchEditionsList` before caching |
+| `viewsCount` | integer | ✅ | Shown in card footer; `?sort=views` |
+| `likesCount` | integer | ✅ | Shown in card footer; `?sort=likes` |
+| `commentsCount` | integer | ✅ | Shown in card footer; `?sort=comments` |
+| `cadernoId` | string | ✅ | Newsletter identifier → `categorySlugFromCaderno()` → newsletter badge + `?interests=` filter |
+| `contentTags` | string | ✅ | **JSON string** e.g. `'["música","leitura","cinema"]'`. Parse with `parseEditionTags()`. Shown as chips on card and in detail header; `?tags=` filter |
+| `authors` | string | ✅ | **JSON string** e.g. `'["tempo de copa ⚽"]'`. Parse with `parseEditionAuthors()`. Shown as badge on card |
+| `htmlContent` | string | ✅ | Full sanitized HTML of the newsletter — rendered by `EditionHtml` component |
+| `publishedAt` | string \| null | — | Full ISO datetime, often null. Use `publishDate` instead |
+| `platform` | string | — | `"both"`, `"web"`, `"email"` — low UX value, not used as filter |
+| `status` | string | — | `"active"`, `"confirmed"` — API only returns active editions anyway |
+| `title` | string | — | Always the date string `"29/06/2026"` — redundant with `publishDate` |
+| `subtitle` | string \| null | — | Always null in observed responses |
+| `displayedDate` | null | — | Always null |
+| `beehiivPostId` / `publicationId` | string | — | Internal Beehiiv IDs — redundant with `id` / `cadernoId` |
+| `beehiivCreatedAt` | integer | — | Unix timestamp — redundant with `publishDate` |
+| `fetchedAt` / `createdAt` / `updatedAt` | string | — | Internal DB timestamps — not useful for display |
 
 **`cadernoId` → category slug mapping** (in `app/data/api.ts`):
 

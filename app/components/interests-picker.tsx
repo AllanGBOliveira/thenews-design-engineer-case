@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { IoNewspaper, IoClose, IoCheckmark, IoPricetag, IoCalendarOutline } from 'react-icons/io5'
+import { IoNewspaper, IoClose, IoCheckmark, IoPricetag, IoCalendarOutline, IoLockOpenOutline } from 'react-icons/io5'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '~/components/ui/sheet'
 import { cn } from '~/lib/utils'
 import { CATEGORIES } from '~/data/editions'
@@ -264,8 +264,7 @@ export function InterestsPicker({
           <section aria-label="Filtrar por acesso">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-chrome-muted" aria-hidden="true">
-                <IoClose size={0} className="hidden" />
-                <span aria-hidden="true" className="text-[13px]">🔓</span>
+                <IoLockOpenOutline size={15} />
               </span>
               <span className="text-chrome-text font-bold text-[14px] flex-1">Acesso</span>
               {audience && (
