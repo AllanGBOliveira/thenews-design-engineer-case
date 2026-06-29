@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '~/components/ui/select'
 import { EditionCard, EditionCardSkeleton } from '~/components/edition-card'
-import { InterestsPicker } from '~/components/interests-picker'
+import { InterestsPicker, PERIOD_LABELS } from '~/components/interests-picker'
 import { fetchEditionsList, categorySlugFromCaderno, parseEditionTags } from '~/data/api'
 import { getCategory } from '~/data/editions'
 
@@ -36,12 +36,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 /* ─── Sort options ───────────────────────────────────────────────────────── */
 
-type SortKey = 'newest' | 'views' | 'likes'
+type SortKey = 'newest' | 'views' | 'likes' | 'comments'
 
 const SORT_LABELS: Record<SortKey, string> = {
   newest: 'Mais recentes',
   views: 'Mais lidos',
   likes: 'Mais curtidos',
+  comments: 'Mais comentados',
 }
 
 /* ─── URL state helpers (following ao.dev pattern) ───────────────────────── */
@@ -53,6 +54,8 @@ function useUrlFilters() {
   const sort = (params.get('sort') ?? 'newest') as SortKey
   const activeTags = (params.get('tags') ?? '').split(',').filter(Boolean)
   const activeInterests = (params.get('interests') ?? '').split(',').filter(Boolean)
+  const activePeriod = params.get('period') ?? undefined
+  const activeAudience = params.get('audience') ?? undefined
   const page = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1)
 
   // Single filter change — replace history (don't pollute stack)
@@ -112,14 +115,17 @@ function useUrlFilters() {
       next.delete('sort')
       next.delete('tags')
       next.delete('interests')
+      next.delete('period')
+      next.delete('audience')
       next.delete('page')
       return next
     }, { replace: true })
   }, [setParams])
 
-  const hasClientFilters = activeTags.length > 0 || activeInterests.length > 0
+  const hasClientFilters =
+    activeTags.length > 0 || activeInterests.length > 0 || !!activePeriod || !!activeAudience
 
-  return { q, sort, activeTags, activeInterests, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters }
+  return { q, sort, activeTags, activeInterests, activePeriod, activeAudience, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters }
 }
 
 /* ─── Search input (debounced URL update) ────────────────────────────────── */
@@ -181,22 +187,34 @@ function SearchInput({ q, setFilter }: { q: string; setFilter: (k: string, v: st
 
 /* ─── Toolbar ────────────────────────────────────────────────────────────── */
 
+const AUDIENCE_LABELS: Record<string, string> = {
+  free: 'Gratuito',
+  premium: 'Premium',
+}
+
 function Toolbar({
   q,
   sort,
   activeTags,
   activeInterests,
+  activePeriod,
+  activeAudience,
   setFilter,
+  setFilters,
   onOpenPicker,
 }: {
   q: string
   sort: SortKey
   activeTags: string[]
   activeInterests: string[]
+  activePeriod: string | undefined
+  activeAudience: string | undefined
   setFilter: (k: string, v: string | undefined) => void
+  setFilters: (patch: Record<string, string | undefined>) => void
   onOpenPicker: () => void
 }) {
-  const totalActive = activeTags.length + activeInterests.length
+  const totalActive =
+    activeTags.length + activeInterests.length + (activePeriod ? 1 : 0) + (activeAudience ? 1 : 0)
 
   function removeTag(tag: string) {
     const next = activeTags.filter((t) => t !== tag)
@@ -206,6 +224,10 @@ function Toolbar({
   function removeInterest(slug: string) {
     const next = activeInterests.filter((s) => s !== slug)
     setFilter('interests', next.length ? next.join(',') : undefined)
+  }
+
+  function clearAll() {
+    setFilters({ interests: undefined, tags: undefined, period: undefined, audience: undefined })
   }
 
   return (
@@ -276,14 +298,37 @@ function Toolbar({
               type="button"
               onClick={() => removeTag(tag)}
               aria-label={`Remover categoria ${tag}`}
-              className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md text-[10px] font-medium bg-chrome-divider text-chrome-text hover:bg-chrome-text/20 transition-colors leading-none"
+              className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold leading-none hover:opacity-80 transition-opacity text-white"
+              style={{ backgroundColor: '#475569' }}
             >
               {tag} <IoClose size={9} aria-hidden="true" />
             </button>
           ))}
+          {activePeriod && (
+            <button
+              type="button"
+              onClick={() => setFilter('period', undefined)}
+              aria-label={`Remover filtro de período: ${PERIOD_LABELS[activePeriod]}`}
+              className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md text-[10px] font-medium leading-none hover:opacity-80 transition-opacity text-white"
+              style={{ backgroundColor: '#6366F1' }}
+            >
+              {PERIOD_LABELS[activePeriod] ?? activePeriod} <IoClose size={9} aria-hidden="true" />
+            </button>
+          )}
+          {activeAudience && (
+            <button
+              type="button"
+              onClick={() => setFilter('audience', undefined)}
+              aria-label={`Remover filtro de acesso: ${AUDIENCE_LABELS[activeAudience]}`}
+              className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md text-[10px] font-medium leading-none hover:opacity-80 transition-opacity text-white"
+              style={{ backgroundColor: '#0891B2' }}
+            >
+              {AUDIENCE_LABELS[activeAudience] ?? activeAudience} <IoClose size={9} aria-hidden="true" />
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => { setFilter('interests', undefined); setFilter('tags', undefined) }}
+            onClick={clearAll}
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-chrome-muted hover:text-chrome-text transition-colors shrink-0"
           >
             <IoClose size={10} aria-hidden="true" /> limpar tudo
@@ -400,9 +445,25 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
 
 /* ─── Home ───────────────────────────────────────────────────────────────── */
 
+/* ─── Period date cutoff ─────────────────────────────────────────────────── */
+
+function getPeriodCutoff(period: string): Date | null {
+  const now = new Date()
+  switch (period) {
+    case 'today':   return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    case 'week':    return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    case 'month':   return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+    case '3months': return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+    case 'year':    return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+    default:        return null
+  }
+}
+
+/* ─── Home ───────────────────────────────────────────────────────────────── */
+
 export default function Home() {
   const { editions, pagination } = useLoaderData<typeof loader>()
-  const { q, sort, activeTags, activeInterests, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters } =
+  const { q, sort, activeTags, activeInterests, activePeriod, activeAudience, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters } =
     useUrlFilters()
 
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -421,27 +482,46 @@ export default function Home() {
       list = list.filter((e) => parseEditionTags(e.contentTags).some((t) => set.has(t)))
     }
 
+    if (activePeriod) {
+      const cutoff = getPeriodCutoff(activePeriod)
+      if (cutoff) {
+        list = list.filter((e) => {
+          if (!e.publishDate) return true
+          return new Date(e.publishDate + 'T12:00:00') >= cutoff
+        })
+      }
+    }
+
+    if (activeAudience === 'free' || activeAudience === 'premium') {
+      list = list.filter((e) => e.audience === activeAudience)
+    }
+
     if (sort === 'views') return [...list].sort((a, b) => b.viewsCount - a.viewsCount)
     if (sort === 'likes') return [...list].sort((a, b) => b.likesCount - a.likesCount)
+    if (sort === 'comments') return [...list].sort((a, b) => b.commentsCount - a.commentsCount)
     return list
-  }, [editions, activeInterests, activeTags, sort])
+  }, [editions, activeInterests, activeTags, activePeriod, activeAudience, sort])
 
   const hasAnyFilter = !!(q || hasClientFilters)
 
   return (
     <>
-      {/* Filter picker (newsletters + content categories) */}
+      {/* Filter picker (newsletters + period + content categories) */}
       <InterestsPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSave={(interests, tags) =>
+        onSave={(interests, tags, period, audience) =>
           setFilters({
             interests: interests.length ? interests.join(',') : undefined,
             tags: tags.length ? tags.join(',') : undefined,
+            period: period ?? undefined,
+            audience: audience ?? undefined,
           })
         }
         initialInterests={activeInterests}
         initialTags={activeTags}
+        initialPeriod={activePeriod}
+        initialAudience={activeAudience}
       />
 
       {/* Sticky toolbar */}
@@ -450,7 +530,10 @@ export default function Home() {
         sort={sort}
         activeTags={activeTags}
         activeInterests={activeInterests}
+        activePeriod={activePeriod}
+        activeAudience={activeAudience}
         setFilter={setFilter}
+        setFilters={setFilters}
         onOpenPicker={() => setPickerOpen(true)}
       />
 
@@ -466,6 +549,8 @@ export default function Home() {
             {activeInterests.length > 0 &&
               ` · ${activeInterests.length} newsletter${activeInterests.length > 1 ? 's' : ''}`}
             {activeTags.length > 0 && ` · ${activeTags.length} tag${activeTags.length > 1 ? 's' : ''}`}
+            {activePeriod && ` · ${PERIOD_LABELS[activePeriod] ?? activePeriod}`}
+            {activeAudience && ` · ${AUDIENCE_LABELS[activeAudience] ?? activeAudience}`}
           </p>
         </div>
 

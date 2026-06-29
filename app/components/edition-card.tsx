@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { IoEye, IoHeart, IoFlash } from 'react-icons/io5'
+import { IoEye, IoHeart, IoChatbubble, IoFlash } from 'react-icons/io5'
 import { cn } from '~/lib/utils'
 import { categorySlugFromCaderno, parseEditionTags, parseEditionAuthors, type Edition } from '~/data/api'
 import { getCategory } from '~/data/editions'
@@ -188,6 +188,11 @@ export function EditionCard({ edition, onTagClick, activeTags = [] }: EditionCar
             {edition.likesCount > 0 && (
               <span className="flex items-center gap-0.5">
                 <IoHeart size={11} aria-hidden="true" /> {formatCount(edition.likesCount)}
+              </span>
+            )}
+            {edition.commentsCount > 0 && (
+              <span className="flex items-center gap-0.5">
+                <IoChatbubble size={11} aria-hidden="true" /> {formatCount(edition.commentsCount)}
               </span>
             )}
           </div>

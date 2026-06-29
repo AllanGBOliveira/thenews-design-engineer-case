@@ -131,7 +131,7 @@ export async function fetchEditionsList({
       pagination: PaginationMeta
     }
 
-    const editions = Array.isArray(json.data) ? json.data : []
+    const editions = (Array.isArray(json.data) ? json.data : []).filter((e) => !e.hiddenFromFeed)
     cacheEditions(editions)
 
     const result: EditionListResult = {

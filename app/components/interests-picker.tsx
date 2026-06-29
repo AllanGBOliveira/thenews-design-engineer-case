@@ -1,8 +1,24 @@
 import { useState, useCallback, useEffect } from 'react'
-import { IoNewspaper, IoClose, IoCheckmark, IoPricetag } from 'react-icons/io5'
+import { IoNewspaper, IoClose, IoCheckmark, IoPricetag, IoCalendarOutline } from 'react-icons/io5'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '~/components/ui/sheet'
 import { cn } from '~/lib/utils'
 import { CATEGORIES } from '~/data/editions'
+
+/* ─── Period options (single-select date range presets) ──────────────────── */
+
+export const PERIOD_OPTIONS = [
+  { value: 'today',   label: 'Hoje' },
+  { value: 'week',    label: 'Esta semana' },
+  { value: 'month',   label: 'Este mês' },
+  { value: '3months', label: 'Últimos 3 meses' },
+  { value: 'year',    label: 'Este ano' },
+] as const
+
+export type PeriodValue = (typeof PERIOD_OPTIONS)[number]['value']
+
+export const PERIOD_LABELS: Record<string, string> = Object.fromEntries(
+  PERIOD_OPTIONS.map((o) => [o.value, o.label]),
+)
 
 /* ─── Known content tag groups ───────────────────────────────────────────────
    Derived from observed API responses. Tags are editorial — inconsistently
@@ -89,10 +105,11 @@ function SectionHead({ icon, title, count, total, onSelectAll, onClearAll }: {
 type InterestsPickerProps = {
   open: boolean
   onClose: () => void
-  /** Called with { interests: string[], tags: string[] } when user saves */
-  onSave: (interests: string[], tags: string[]) => void
+  onSave: (interests: string[], tags: string[], period: string | undefined, audience: string | undefined) => void
   initialInterests?: string[]
   initialTags?: string[]
+  initialPeriod?: string
+  initialAudience?: string
 }
 
 export function InterestsPicker({
@@ -101,14 +118,20 @@ export function InterestsPicker({
   onSave,
   initialInterests = [],
   initialTags = [],
+  initialPeriod,
+  initialAudience,
 }: InterestsPickerProps) {
   const [interests, setInterests] = useState<Set<string>>(new Set(initialInterests))
   const [tags, setTags] = useState<Set<string>>(new Set(initialTags))
+  const [period, setPeriod] = useState<string | undefined>(initialPeriod)
+  const [audience, setAudience] = useState<string | undefined>(initialAudience)
 
   useEffect(() => {
     if (open) {
       setInterests(new Set(initialInterests))
       setTags(new Set(initialTags))
+      setPeriod(initialPeriod)
+      setAudience(initialAudience)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
@@ -130,16 +153,18 @@ export function InterestsPicker({
   }, [])
 
   function handleSave() {
-    onSave(Array.from(interests), Array.from(tags))
+    onSave(Array.from(interests), Array.from(tags), period, audience)
     onClose()
   }
 
   function handleClearAll() {
     setInterests(new Set())
     setTags(new Set())
+    setPeriod(undefined)
+    setAudience(undefined)
   }
 
-  const totalSelected = interests.size + tags.size
+  const totalSelected = interests.size + tags.size + (period ? 1 : 0) + (audience ? 1 : 0)
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -205,6 +230,70 @@ export function InterestsPicker({
             </div>
           </section>
 
+          {/* ── Period (single-select date range) ────────────────────────── */}
+          <section aria-label="Filtrar por período">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-chrome-muted" aria-hidden="true">
+                <IoCalendarOutline size={15} />
+              </span>
+              <span className="text-chrome-text font-bold text-[14px] flex-1">Período</span>
+              {period && (
+                <button
+                  type="button"
+                  onClick={() => setPeriod(undefined)}
+                  className="text-[12px] font-semibold text-brand hover:text-brand-dim transition-colors focus-visible:outline-none focus-visible:underline"
+                >
+                  limpar
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Período">
+              {PERIOD_OPTIONS.map((opt) => (
+                <Chip
+                  key={opt.value}
+                  label={opt.label}
+                  selected={period === opt.value}
+                  color="#6366F1"
+                  onToggle={() => setPeriod((prev) => (prev === opt.value ? undefined : opt.value))}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* ── Audience (single-select: free / premium) ──────────────────── */}
+          <section aria-label="Filtrar por acesso">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-chrome-muted" aria-hidden="true">
+                <IoClose size={0} className="hidden" />
+                <span aria-hidden="true" className="text-[13px]">🔓</span>
+              </span>
+              <span className="text-chrome-text font-bold text-[14px] flex-1">Acesso</span>
+              {audience && (
+                <button
+                  type="button"
+                  onClick={() => setAudience(undefined)}
+                  className="text-[12px] font-semibold text-brand hover:text-brand-dim transition-colors focus-visible:outline-none focus-visible:underline"
+                >
+                  limpar
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Acesso">
+              <Chip
+                label="Gratuito"
+                selected={audience === 'free'}
+                color="#16A34A"
+                onToggle={() => setAudience((prev) => (prev === 'free' ? undefined : 'free'))}
+              />
+              <Chip
+                label="Premium"
+                selected={audience === 'premium'}
+                color="#0891B2"
+                onToggle={() => setAudience((prev) => (prev === 'premium' ? undefined : 'premium'))}
+              />
+            </div>
+          </section>
+
           {/* ── Content categories (tags) ──────────────────────────────── */}
           <section aria-label="Filtrar por categoria">
             <SectionHead
@@ -224,6 +313,7 @@ export function InterestsPicker({
                   key={tag}
                   label={tag}
                   selected={tags.has(tag)}
+                  color="#475569"
                   onToggle={() => toggleTag(tag)}
                 />
               ))}
