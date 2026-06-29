@@ -10,13 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { EditionCard, EditionCardSkeleton, TagChip } from '~/components/edition-card'
+import { EditionCard, EditionCardSkeleton } from '~/components/edition-card'
 import { InterestsPicker } from '~/components/interests-picker'
-import {
-  fetchEditionsList,
-  categorySlugFromCaderno,
-  parseEditionTags,
-} from '~/data/api'
+import { fetchEditionsList, categorySlugFromCaderno, parseEditionTags } from '~/data/api'
 import { getCategory } from '~/data/editions'
 
 /* ─── Meta ───────────────────────────────────────────────────────────────── */
@@ -171,7 +167,6 @@ function Toolbar({
   sort,
   activeTags,
   activeInterests,
-  availableTags,
   setFilter,
   onOpenPicker,
 }: {
@@ -179,18 +174,19 @@ function Toolbar({
   sort: SortKey
   activeTags: string[]
   activeInterests: string[]
-  availableTags: string[]
   setFilter: (k: string, v: string | undefined) => void
   onOpenPicker: () => void
 }) {
-  const interestCount = activeInterests.length
-  const hasTagFilter = activeTags.length > 0
+  const totalActive = activeTags.length + activeInterests.length
 
-  function toggleTag(tag: string) {
-    const next = activeTags.includes(tag)
-      ? activeTags.filter((t) => t !== tag)
-      : [...activeTags, tag]
+  function removeTag(tag: string) {
+    const next = activeTags.filter((t) => t !== tag)
     setFilter('tags', next.length ? next.join(',') : undefined)
+  }
+
+  function removeInterest(slug: string) {
+    const next = activeInterests.filter((s) => s !== slug)
+    setFilter('interests', next.length ? next.join(',') : undefined)
   }
 
   return (
@@ -221,54 +217,24 @@ function Toolbar({
         <button
           type="button"
           onClick={onOpenPicker}
-          aria-label={interestCount ? `${interestCount} newsletters selecionados` : 'Filtrar por newsletter'}
+          aria-label={totalActive ? `${totalActive} filtros ativos` : 'Filtrar feed'}
           className="relative flex items-center justify-center w-9 h-9 shrink-0 rounded-xl bg-chrome-surface border border-chrome-divider text-chrome-text hover:border-chrome-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <IoOptions size={18} aria-hidden="true" />
-          {interestCount > 0 && (
+          {totalActive > 0 && (
             <span
               className="absolute -top-1 -end-1 flex items-center justify-center w-4 h-4 rounded-full bg-brand text-[#0A0A0F] font-bold text-[9px] leading-none"
               aria-hidden="true"
             >
-              {interestCount}
+              {totalActive}
             </span>
           )}
         </button>
       </div>
 
-      {/* Content tag filter — only shown when current page has tagged editions */}
-      {availableTags.length > 0 && (
-        <div
-          className="flex gap-1.5 px-3 pb-2 overflow-x-auto scrollbar-none"
-          aria-label="Filtrar por tag"
-          role="group"
-        >
-          {availableTags.map((tag) => (
-            <TagChip
-              key={tag}
-              tag={tag}
-              active={activeTags.includes(tag)}
-              onClick={toggleTag}
-            />
-          ))}
-          {hasTagFilter && (
-            <button
-              type="button"
-              onClick={() => setFilter('tags', undefined)}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-chrome-muted hover:text-chrome-text transition-colors shrink-0"
-            >
-              <IoClose size={10} aria-hidden="true" /> limpar
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Active interest chips */}
-      {activeInterests.length > 0 && (
-        <div
-          className="flex gap-1.5 px-3 pb-2 overflow-x-auto scrollbar-none"
-          aria-label="Newsletters ativos"
-        >
+      {/* Active filters strip — shown only when something is active */}
+      {totalActive > 0 && (
+        <div className="flex gap-1.5 px-3 pb-2 overflow-x-auto scrollbar-none" aria-label="Filtros ativos">
           {activeInterests.map((slug) => {
             const cat = getCategory(slug)
             if (!cat) return null
@@ -276,25 +242,32 @@ function Toolbar({
               <button
                 key={slug}
                 type="button"
-                onClick={() => {
-                  const next = activeInterests.filter((s) => s !== slug)
-                  setFilter('interests', next.length ? next.join(',') : undefined)
-                }}
+                onClick={() => removeInterest(slug)}
+                aria-label={`Remover newsletter ${cat.label}`}
                 className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold text-white leading-none hover:opacity-80 transition-opacity"
                 style={{ backgroundColor: cat.dotColor }}
-                aria-label={`Remover filtro ${cat.label}`}
               >
-                {cat.label}
-                <IoClose size={9} aria-hidden="true" />
+                {cat.label} <IoClose size={9} aria-hidden="true" />
               </button>
             )
           })}
+          {activeTags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => removeTag(tag)}
+              aria-label={`Remover categoria ${tag}`}
+              className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md text-[10px] font-medium bg-chrome-divider text-chrome-text hover:bg-chrome-text/20 transition-colors leading-none"
+            >
+              {tag} <IoClose size={9} aria-hidden="true" />
+            </button>
+          ))}
           <button
             type="button"
-            onClick={() => setFilter('interests', undefined)}
+            onClick={() => { setFilter('interests', undefined); setFilter('tags', undefined) }}
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-chrome-muted hover:text-chrome-text transition-colors shrink-0"
           >
-            <IoClose size={10} aria-hidden="true" /> limpar
+            <IoClose size={10} aria-hidden="true" /> limpar tudo
           </button>
         </div>
       )}
@@ -434,15 +407,6 @@ export default function Home() {
     return list
   }, [editions, activeInterests, activeTags, sort])
 
-  // Unique content tags from the current page for the tag filter chips
-  const availableTags = useMemo(() => {
-    const set = new Set<string>()
-    for (const e of editions) {
-      for (const t of parseEditionTags(e.contentTags)) set.add(t)
-    }
-    return [...set].sort()
-  }, [editions])
-
   const hasAnyFilter = !!(q || hasClientFilters)
 
   return (
@@ -465,7 +429,6 @@ export default function Home() {
         sort={sort}
         activeTags={activeTags}
         activeInterests={activeInterests}
-        availableTags={availableTags}
         setFilter={setFilter}
         onOpenPicker={() => setPickerOpen(true)}
       />
