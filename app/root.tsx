@@ -7,7 +7,6 @@ import {
   ScrollRestoration,
   useLoaderData,
   useRouteLoaderData,
-  type LoaderFunctionArgs,
 } from "react-router"
 import { type ReactNode } from "react"
 
@@ -53,19 +52,19 @@ export const links: Route.LinksFunction = () => [
   { rel: "manifest", href: "/manifest.webmanifest" },
 ]
 
-// ─── Loader ─────────────────────────────────────────────────────────────────
+// ─── Client loader (SPA-compatible: reads document.cookie, not request headers) ──
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const cookieHeader = request.headers.get("Cookie") ?? ""
+export async function clientLoader() {
+  const cookieHeader = typeof document !== 'undefined' ? document.cookie : ''
 
   const rawTheme = parseCookie(cookieHeader, config.themeCookieKey)
   const themeIsExplicit = rawTheme !== undefined
   const theme = (rawTheme === 'dark' ? 'dark' : rawTheme === 'system' ? 'system' : 'light') as Theme
 
-  // Cookie wins; fall back to Accept-Language (mirrors navigator.language detection on client)
+  // Cookie wins; fall back to navigator.language (mirrors i18next-browser-languagedetector)
   const locale = (
     parseCookie(cookieHeader, config.i18nCookieKey) ??
-    parseAcceptLanguage(request.headers.get("Accept-Language"))
+    parseAcceptLanguage(typeof navigator !== 'undefined' ? navigator.language : null)
   ) as SupportedLocale
 
   if (i18n.language !== locale) {
@@ -95,7 +94,7 @@ const themeScript = (cookieKey: string) =>
   `(function(){try{var m=document.cookie.match(new RegExp('(?:^|; )${cookieKey}=([^;]*)'));var t=m?decodeURIComponent(m[1]):null;if(!t||t==='system')t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.classList.add(t)}catch(e){}})();`
 
 export function Layout({ children }: { children: ReactNode }) {
-  const data = useRouteLoaderData<typeof loader>("root")
+  const data = useRouteLoaderData<typeof clientLoader>("root")
   const locale = (data?.locale ?? 'pt-BR') as SupportedLocale
   const dir = locale === 'ar-SA' ? 'rtl' : 'ltr'
 

@@ -26,7 +26,7 @@ export function meta() {
 
 /* ─── Loader — reads only API params (q, page) ───────────────────────────── */
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
   const url = new URL(request.url)
   const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1)
   const q = url.searchParams.get('q') ?? ''

@@ -18,7 +18,7 @@ import { getCategory, getQuiz } from '~/data/editions'
 
 /* ─── Loader ─────────────────────────────────────────────────────────────── */
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const slug = params.slug ?? ''
   const { edition, prev, next } = await fetchEditionWithNeighbors(slug)
   return { edition, prev, next }
