@@ -274,6 +274,141 @@ fix/calendar-future-day-state
 
 ---
 
+## The news public API
+
+Base URL: `https://api.thenews.com.br/api/mobile`
+
+All endpoints are **unauthenticated** unless noted. No `Authorization` header required for the endpoints below.
+
+### `GET /editions`
+
+Paginated list of editions (newsletter posts) across all newsletters.
+
+**Confirmed working params:**
+
+| Param | Type | Description |
+|---|---|---|
+| `page` | integer ≥ 1 | Page number. Default: 1. |
+| `search` | string | Full-text search on `subjectLine` + `previewText`. Returns matching editions across all newsletters and pages. |
+
+**Params that do NOT work (ignored by API):**
+- `sort`, `order`, `orderBy`, `direction` — no server-side sorting; the API always returns newest-first.
+- `cadernoId` — category filter without auth; returns same results as no filter.
+- `tags` — no tag filtering via API.
+
+**Response shape:**
+
+```json
+{
+  "success": true,
+  "data": [ /* Edition[] */ ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 1409,
+    "totalPages": 141
+  }
+}
+```
+
+**Edition object fields:**
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | string | Internal ID, e.g. `"id_z0da1awuumqyy6gan"` |
+| `beehiivPostId` | string | Beehiiv post UUID |
+| `publicationId` | string | Same as `cadernoId` (newsletter identifier) |
+| `title` | string | Usually the date string e.g. `"29/06/2026"` — NOT the headline |
+| `subjectLine` | string | **The email subject / headline** — use this as the card title |
+| `previewText` | string | **Email preview text / subtitle** — use this as the card description (4-line clamp) |
+| `slug` | string | URL slug, e.g. `"sunday-s-edition-28-06"`. Used in `/editions/:slug` route. |
+| `thumbnailUrl` | string \| null | Cover image URL from Beehiiv S3. Many editions have no thumbnail. |
+| `webUrl` | string | Public URL on the newsletter's domain, e.g. `"https://health.thenews.com.br/p/29-06-2026"` |
+| `audience` | `"free"` \| `"premium"` | Premium posts require subscription |
+| `platform` | string | `"both"`, `"web"`, `"email"` |
+| `publishDate` | string | ISO date `"2026-06-29"` — use for display, NOT `publishedAt` |
+| `publishedAt` | string \| null | Full ISO datetime (often null) |
+| `isCurrentEdition` | boolean | True for today's edition — show "Hoje" badge |
+| `hiddenFromFeed` | boolean | Should be filtered out from listing if true |
+| `viewsCount` | integer | Page view count (zero for many non-the-news newsletters) |
+| `likesCount` | integer | Heart/like count |
+| `commentsCount` | integer | Comment count |
+| `cadernoId` | string | Newsletter identifier. Maps to category slug via `categorySlugFromCaderno()`. |
+| `contentTags` | string | **JSON string** e.g. `'["música","leitura","cinema"]'` or `'[]'`. Parse with `parseEditionTags()`. |
+| `authors` | string | **JSON string** e.g. `'["tempo de copa ⚽"]'` or `'[]'`. Parse with `parseEditionAuthors()`. |
+| `htmlContent` | string | Full sanitized HTML of the newsletter. Beehiiv email format — needs sanitization via `EditionHtml`. |
+| `beehiivCreatedAt` | integer | Unix timestamp |
+| `displayedDate` | null | Always null in observed responses |
+| `status` | string | `"confirmed"` etc. |
+| `fetchedAt` / `createdAt` / `updatedAt` | string | Internal DB timestamps |
+
+**`cadernoId` → category slug mapping** (in `app/data/api.ts`):
+
+| `cadernoId` suffix | Category slug | Newsletter name |
+|---|---|---|
+| `...bc12` | `the-news` | the news (daily, main newsletter) |
+| `...bc12_night` | `night` | at night edition |
+| `...925c_copa` | `tempo-de-copa` | tempo de copa (World Cup special) |
+| `...434aa` | `money` | money |
+| `...96c9` | `health` | health |
+| `...adc8` | `cult` | cult |
+| `...6285` | `travel` | travel |
+| `...353c` | `better-work` | better work |
+| `...0e680` | `business` | business |
+| `...6e3` | `around` | around |
+| `...8b94` | `rising` | rising |
+
+**`contentTags` observed values:**
+- `"[]"` — most editions have no tags
+- `'["at night"]'` — the AT NIGHT weekly
+- `'["música","leitura","cinema","cultura","poesia"]'` — cult newsletter
+- Tags come from Beehiiv's tagging system; not filterable via API without auth
+
+**`authors` observed values:**
+- `"[]"` — most editions
+- `'["tempo de copa ⚽"]'` — tempo de copa editions
+- `'["the news 🌖"]'` — night editions
+
+### `GET /editions/:id` or `GET /editions?search=slug`
+
+There is no dedicated `/editions/:slug` endpoint. To fetch a single edition by slug:
+1. Check the module-level `_cache` (populated on list fetches)
+2. Paginate through `GET /editions?page=N` until the slug is found (max 5 pages checked)
+- `?search=slug` does NOT work — search is text-based, not slug-based
+
+### Other mobile API endpoints (untested, require auth)
+
+Based on app network inspection:
+- `GET /user/profile` — user profile (auth required)
+- `GET /user/habits` — habit tracking data (auth required)
+- `GET /editions?cadernoId=<id>` — category filter (auth required; returns unfiltered without auth)
+- `POST /editions/:id/like` — like an edition (auth required)
+- `POST /editions/:id/view` — record a view (auth required)
+
+### Client-side-only operations
+
+Due to auth requirement, these must be done client-side from the current page's API results:
+- **Sort by views/likes** — sort the current page's `data[]` array
+- **Filter by newsletter (interests)** — filter by `categorySlugFromCaderno(edition.cadernoId)`
+- **Filter by content tag** — parse `edition.contentTags` JSON and filter
+
+### URL state convention
+
+All filter/sort/search state lives in URL params (shareable links):
+
+| Param | Where used | Example |
+|---|---|---|
+| `?q=` | API search param | `?q=copa+do+mundo` |
+| `?page=` | API pagination | `?page=3` (omit for page 1) |
+| `?sort=` | Client-side sort | `?sort=likes` (omit for default `newest`) |
+| `?tags=` | Client-side tag filter | `?tags=música,cinema` |
+| `?interests=` | Client-side newsletter filter | `?interests=the-news,health` |
+
+Filter changes use `{ replace: true }` (don't pollute browser history).
+Page changes use default push (support browser back).
+
+---
+
 ## AI-Assisted Engineering
 
 This project is developed with Claude Code as a development copilot. The developer makes all architectural, design, and product decisions. AI accelerates implementation of repetitive UI patterns and tooling setup.

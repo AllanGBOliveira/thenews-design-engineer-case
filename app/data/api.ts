@@ -61,13 +61,30 @@ export function categorySlugFromCaderno(cadernoId: string): string {
   return CADERNO_TO_SLUG[cadernoId] ?? 'the-news'
 }
 
-/* ─── Module-level edition cache ─────────────────────────────────────────
-   Shared across requests in SSR (Node.js module singleton) and across
-   navigations in SPA. Bounded at 200 entries to avoid unbounded growth.
-   Stores full edition including htmlContent so detail page never double-fetches.
+/* ─── Tag / author parsers ───────────────────────────────────────────────
+   The API returns contentTags and authors as JSON strings (e.g. '["música"]').
+   Parse on demand — never mutate the Edition object itself.
+──────────────────────────────────────────────────────────────────────────── */
+
+export function parseEditionTags(raw: string): string[] {
+  if (!raw || raw === '[]') return []
+  try { return JSON.parse(raw) } catch { return [] }
+}
+
+export function parseEditionAuthors(raw: string): string[] {
+  if (!raw || raw === '[]') return []
+  try { return JSON.parse(raw) } catch { return [] }
+}
+
+/* ─── Module-level caches ────────────────────────────────────────────────
+   Edition detail cache: shared across SSR requests (Node module singleton)
+   and SPA navigations. Bounded at 200 entries.
+   List result cache: 30-second TTL avoids redundant API calls when URL
+   params change for client-side filters (sort/tags/interests).
 ──────────────────────────────────────────────────────────────────────────── */
 
 const _cache = new Map<string, Edition>()
+const _listCache = new Map<string, { result: EditionListResult; ts: number }>()
 
 export function cacheEditions(editions: Edition[]): void {
   for (const e of editions) {
@@ -97,6 +114,10 @@ export async function fetchEditionsList({
   page = 1,
   search = '',
 }: FetchListParams = {}): Promise<EditionListResult> {
+  const cacheKey = `${page}:${search}`
+  const hit = _listCache.get(cacheKey)
+  if (hit && Date.now() - hit.ts < 30_000) return hit.result
+
   try {
     const params = new URLSearchParams({ page: String(page) })
     if (search) params.set('search', search)
@@ -113,10 +134,12 @@ export async function fetchEditionsList({
     const editions = Array.isArray(json.data) ? json.data : []
     cacheEditions(editions)
 
-    return {
+    const result: EditionListResult = {
       editions,
       pagination: json.pagination ?? { page, limit: 10, total: 0, totalPages: 0 },
     }
+    _listCache.set(cacheKey, { result, ts: Date.now() })
+    return result
   } catch {
     return emptyResult(page)
   }

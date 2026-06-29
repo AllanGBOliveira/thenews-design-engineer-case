@@ -1,57 +1,82 @@
 import { Link } from 'react-router'
 import { IoEye, IoHeart, IoFlash } from 'react-icons/io5'
-import { FaCrown } from 'react-icons/fa6'
 import { cn } from '~/lib/utils'
-import { Badge } from '~/components/ui/badge'
-import { Card, CardContent } from '~/components/ui/card'
-import { categorySlugFromCaderno, type Edition } from '~/data/api'
+import { categorySlugFromCaderno, parseEditionTags, parseEditionAuthors, type Edition } from '~/data/api'
 import { getCategory } from '~/data/editions'
 
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
-function formatDate(publishDate: string): string {
+export function formatDate(publishDate: string): string {
   const d = new Date(publishDate + 'T12:00:00')
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
 function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
   return String(n)
 }
 
-/* ─── Category pill ──────────────────────────────────────────────────────── */
+/* ─── Newsletter badge ───────────────────────────────────────────────────── */
 
-function CategoryPill({ cadernoId }: { cadernoId: string }) {
+function NewsletterBadge({ cadernoId }: { cadernoId: string }) {
   const slug = categorySlugFromCaderno(cadernoId)
   const cat = getCategory(slug)
   if (!cat) return null
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white leading-none shrink-0"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-white leading-none whitespace-nowrap"
       style={{ backgroundColor: cat.dotColor }}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" aria-hidden="true" />
+      <span className="w-1 h-1 rounded-full bg-white/70 shrink-0" aria-hidden="true" />
       {cat.label}
+    </span>
+  )
+}
+
+/* ─── Content tag chip (clickable for filter) ────────────────────────────── */
+
+export function TagChip({
+  tag,
+  active,
+  onClick,
+}: {
+  tag: string
+  active?: boolean
+  onClick?: (tag: string) => void
+}) {
+  const base =
+    'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-none whitespace-nowrap transition-colors'
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={() => onClick(tag)}
+        className={cn(
+          base,
+          active
+            ? 'bg-brand text-[#0A0A0F]'
+            : 'bg-chrome-divider text-chrome-muted hover:bg-chrome-text/20 hover:text-chrome-text',
+        )}
+      >
+        {tag}
+      </button>
+    )
+  }
+  return (
+    <span
+      className={cn(base, 'bg-chrome-divider text-chrome-muted')}
+    >
+      {tag}
     </span>
   )
 }
 
 /* ─── Thumbnail ──────────────────────────────────────────────────────────── */
 
-function Thumbnail({
-  src,
-  alt,
-  cadernoId,
-  className,
-}: {
-  src: string | null
-  alt: string
-  cadernoId: string
-  className?: string
-}) {
+function Thumbnail({ src, alt, cadernoId }: { src: string | null; alt: string; cadernoId: string }) {
   const slug = categorySlugFromCaderno(cadernoId)
-  const cat = getCategory(slug)
-  const color = cat?.dotColor ?? '#F97316'
+  const color = getCategory(slug)?.dotColor ?? '#F97316'
 
   if (src) {
     return (
@@ -60,149 +85,114 @@ function Thumbnail({
         alt={alt}
         loading="lazy"
         decoding="async"
-        className={cn('object-cover w-full h-full', className)}
+        className="absolute inset-0 w-full h-full object-cover"
       />
     )
   }
 
   return (
     <div
-      className={cn('w-full h-full flex items-center justify-center', className)}
-      style={{ background: `linear-gradient(135deg, ${color}22 0%, ${color}44 100%)` }}
+      className="absolute inset-0 w-full h-full flex items-center justify-center"
+      style={{ background: `linear-gradient(135deg, ${color}1a 0%, ${color}33 100%)` }}
       aria-hidden="true"
     >
-      <span
-        className="font-black text-[28px] leading-none select-none"
-        style={{ color }}
-      >
+      <span className="font-black text-[22px] leading-none select-none" style={{ color }}>
         tn
       </span>
     </div>
   )
 }
 
-/* ─── Stats row ──────────────────────────────────────────────────────────── */
+/* ─── Edition card ───────────────────────────────────────────────────────── */
 
-function StatsRow({ edition }: { edition: Edition }) {
-  return (
-    <div className="flex items-center gap-3 text-chrome-muted text-[11px]">
-      {edition.viewsCount > 0 && (
-        <span className="flex items-center gap-1">
-          <IoEye size={12} aria-hidden="true" />
-          {formatCount(edition.viewsCount)}
-        </span>
-      )}
-      {edition.likesCount > 0 && (
-        <span className="flex items-center gap-1">
-          <IoHeart size={12} aria-hidden="true" />
-          {formatCount(edition.likesCount)}
-        </span>
-      )}
-    </div>
-  )
+type EditionCardProps = {
+  edition: Edition
+  onTagClick?: (tag: string) => void
+  activeTags?: string[]
 }
 
-/* ─── Featured card (hero — first edition, full width) ──────────────────── */
+export function EditionCard({ edition, onTagClick, activeTags = [] }: EditionCardProps) {
+  const tags = parseEditionTags(edition.contentTags)
+  const authors = parseEditionAuthors(edition.authors)
 
-export function EditionCardFeatured({ edition }: { edition: Edition }) {
   return (
     <Link
       to={`/editions/${edition.slug}`}
       state={{ edition }}
-      className="block group focus-visible:outline-none"
+      className="group flex flex-col h-full overflow-hidden rounded-xl border border-chrome-divider bg-chrome-surface hover:border-chrome-muted transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >
-      <Card className="overflow-hidden border-chrome-divider bg-chrome-surface rounded-2xl hover:border-chrome-muted transition-colors duration-200 group-focus-visible:ring-2 group-focus-visible:ring-brand">
-        {/* Image */}
-        <div className="relative w-full aspect-[16/7] overflow-hidden">
-          <Thumbnail
-            src={edition.thumbnailUrl}
-            alt={edition.subjectLine}
-            cadernoId={edition.cadernoId}
-          />
-          {/* Badges overlay */}
-          <div className="absolute top-3 start-3 flex flex-wrap gap-1.5">
-            <CategoryPill cadernoId={edition.cadernoId} />
-            {edition.isCurrentEdition && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand text-[#0A0A0F] leading-none">
-                <IoFlash size={9} aria-hidden="true" /> Hoje
-              </span>
-            )}
-            {edition.audience === 'premium' && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-[#0A0A0F] leading-none">
-                <FaCrown size={9} aria-hidden="true" /> Premium
-              </span>
-            )}
-          </div>
-        </div>
+      {/* Thumbnail — flush, no top padding */}
+      <div className="relative w-full aspect-video shrink-0 overflow-hidden rounded-t-xl bg-chrome-divider">
+        <Thumbnail src={edition.thumbnailUrl} alt={edition.subjectLine} cadernoId={edition.cadernoId} />
+        {edition.isCurrentEdition && (
+          <span className="absolute top-2 start-2 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-bold bg-brand text-[#0A0A0F] leading-none">
+            <IoFlash size={8} aria-hidden="true" /> Hoje
+          </span>
+        )}
+      </div>
 
-        <CardContent className="p-4">
-          <p className="text-chrome-text font-bold text-[17px] leading-snug mb-1.5 line-clamp-2 group-hover:text-brand transition-colors">
-            {edition.subjectLine}
-          </p>
-          {edition.previewText && (
-            <p className="text-chrome-muted text-[13px] leading-relaxed line-clamp-2 mb-3">
-              {edition.previewText}
-            </p>
-          )}
-          <div className="flex items-center justify-between">
-            {edition.publishDate && (
-              <time
-                dateTime={edition.publishDate}
-                className="text-chrome-muted text-[12px]"
-              >
-                {formatDate(edition.publishDate)}
-              </time>
-            )}
-            <StatsRow edition={edition} />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  )
-}
-
-/* ─── Compact grid card ──────────────────────────────────────────────────── */
-
-export function EditionCard({ edition }: { edition: Edition }) {
-  return (
-    <Link
-      to={`/editions/${edition.slug}`}
-      state={{ edition }}
-      className="block group focus-visible:outline-none"
-    >
-      <Card className="overflow-hidden border-chrome-divider bg-chrome-surface rounded-xl hover:border-chrome-muted transition-colors duration-200 h-full group-focus-visible:ring-2 group-focus-visible:ring-brand">
-        {/* Thumbnail */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden">
-          <Thumbnail
-            src={edition.thumbnailUrl}
-            alt={edition.subjectLine}
-            cadernoId={edition.cadernoId}
-          />
-          {edition.isCurrentEdition && (
-            <span className="absolute top-2 start-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-brand text-[#0A0A0F] leading-none">
-              <IoFlash size={8} aria-hidden="true" /> Hoje
+      {/* Body */}
+      <div className="flex flex-col flex-1 gap-2 p-3">
+        {/* Newsletter + authors badges row */}
+        <div className="flex flex-wrap gap-1">
+          <NewsletterBadge cadernoId={edition.cadernoId} />
+          {authors.map((a) => (
+            <span
+              key={a}
+              className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium leading-none whitespace-nowrap bg-chrome-divider text-chrome-muted"
+            >
+              {a}
             </span>
-          )}
+          ))}
         </div>
 
-        <CardContent className="p-3 flex flex-col gap-1.5">
-          <CategoryPill cadernoId={edition.cadernoId} />
-          <p className="text-chrome-text font-bold text-[14px] leading-snug line-clamp-2 group-hover:text-brand transition-colors flex-1">
-            {edition.subjectLine}
+        {/* Title */}
+        <p className="text-chrome-text font-bold text-[13px] leading-snug line-clamp-2 group-hover:text-brand transition-colors">
+          {edition.subjectLine}
+        </p>
+
+        {/* Description */}
+        {edition.previewText && (
+          <p className="text-chrome-muted text-[12px] leading-relaxed line-clamp-4 flex-1">
+            {edition.previewText}
           </p>
-          <div className="flex items-center justify-between mt-auto pt-1">
-            {edition.publishDate && (
-              <time
-                dateTime={edition.publishDate}
-                className="text-chrome-muted text-[11px]"
-              >
-                {formatDate(edition.publishDate)}
-              </time>
-            )}
-            <StatsRow edition={edition} />
+        )}
+
+        {/* Content tags */}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1" onClick={(e) => e.preventDefault()}>
+            {tags.map((tag) => (
+              <TagChip
+                key={tag}
+                tag={tag}
+                active={activeTags.includes(tag)}
+                onClick={onTagClick}
+              />
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between gap-2 mt-auto pt-1">
+          {edition.publishDate && (
+            <time dateTime={edition.publishDate} className="text-chrome-muted text-[11px] shrink-0">
+              {formatDate(edition.publishDate)}
+            </time>
+          )}
+          <div className="flex items-center gap-2 text-chrome-muted text-[11px]">
+            {edition.viewsCount > 0 && (
+              <span className="flex items-center gap-0.5">
+                <IoEye size={11} aria-hidden="true" /> {formatCount(edition.viewsCount)}
+              </span>
+            )}
+            {edition.likesCount > 0 && (
+              <span className="flex items-center gap-0.5">
+                <IoHeart size={11} aria-hidden="true" /> {formatCount(edition.likesCount)}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
     </Link>
   )
 }
@@ -210,39 +200,24 @@ export function EditionCard({ edition }: { edition: Edition }) {
 /* ─── Skeleton ───────────────────────────────────────────────────────────── */
 
 function Bone({ className }: { className?: string }) {
-  return <div className={cn('animate-pulse rounded-lg bg-chrome-divider', className)} />
-}
-
-export function EditionCardFeaturedSkeleton() {
-  return (
-    <Card className="overflow-hidden border-chrome-divider bg-chrome-surface rounded-2xl">
-      <Bone className="w-full aspect-[16/7] rounded-none" />
-      <CardContent className="p-4 space-y-2">
-        <Bone className="h-5 w-3/4" />
-        <Bone className="h-4 w-full" />
-        <Bone className="h-4 w-2/3" />
-        <div className="flex justify-between pt-1">
-          <Bone className="h-3 w-20" />
-          <Bone className="h-3 w-16" />
-        </div>
-      </CardContent>
-    </Card>
-  )
+  return <div className={cn('animate-pulse rounded bg-chrome-divider', className)} />
 }
 
 export function EditionCardSkeleton() {
   return (
-    <Card className="overflow-hidden border-chrome-divider bg-chrome-surface rounded-xl">
-      <Bone className="w-full aspect-[4/3] rounded-none" />
-      <CardContent className="p-3 space-y-2">
-        <Bone className="h-4 w-16 rounded-full" />
-        <Bone className="h-4 w-full" />
-        <Bone className="h-4 w-3/4" />
+    <div className="flex flex-col overflow-hidden rounded-xl border border-chrome-divider bg-chrome-surface">
+      <Bone className="w-full aspect-video rounded-t-xl rounded-b-none" />
+      <div className="p-3 space-y-2">
+        <Bone className="h-4 w-20 rounded-md" />
+        <Bone className="h-3.5 w-full" />
+        <Bone className="h-3.5 w-4/5" />
+        <Bone className="h-3 w-full" />
+        <Bone className="h-3 w-3/4" />
         <div className="flex justify-between pt-1">
+          <Bone className="h-3 w-14" />
           <Bone className="h-3 w-12" />
-          <Bone className="h-3 w-10" />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

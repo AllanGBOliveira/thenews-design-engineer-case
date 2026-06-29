@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link, useLoaderData, useLocation } from 'react-router'
+import { Link, useLoaderData, useLocation, useNavigate } from 'react-router'
 import { IoArrowBack, IoFlash, IoGlobeOutline } from 'react-icons/io5'
 import type { Route } from './+types/editions.$slug'
 import { ReadingProgress } from '~/components/reading-progress'
@@ -34,6 +34,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 /* ─── Newsletter header ──────────────────────────────────────────────────── */
 
 function EditionHeader({ edition }: { edition: Edition }) {
+  const navigate = useNavigate()
   const catSlug = categorySlugFromCaderno(edition.cadernoId)
   const category = getCategory(catSlug)
   const date = edition.publishDate
@@ -42,10 +43,20 @@ function EditionHeader({ edition }: { edition: Edition }) {
       })
     : null
 
+  function handleBack(e: React.MouseEvent) {
+    // Prefer history.back() to preserve listing search params.
+    // Falls through to <Link to="/"> href if history is unavailable (direct URL access).
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      e.preventDefault()
+      navigate(-1)
+    }
+  }
+
   return (
     <div className="flex items-center gap-3 px-4 py-3 border-b border-chrome-divider bg-chrome-bg">
       <Link
         to="/"
+        onClick={handleBack}
         aria-label="Voltar para o feed"
         className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-chrome-text/10 transition-colors shrink-0 text-chrome-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >

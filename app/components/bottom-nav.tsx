@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router'
+import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   IoNewspaper,
@@ -14,10 +14,12 @@ type NavItemDef = {
   labelKey: string
   ariaLabelKey: string
   icon: React.ComponentType<{ size?: number; className?: string }>
+  /** Extra paths that count as "active" for this nav item */
+  activeOn?: string[]
 }
 
 const NAV_CONFIG: NavItemDef[] = [
-  { to: '/',       labelKey: 'common.nav.edition', ariaLabelKey: 'common.nav.editionAria', icon: IoNewspaper },
+  { to: '/', labelKey: 'common.nav.edition', ariaLabelKey: 'common.nav.editionAria', icon: IoNewspaper, activeOn: ['/editions/'] },
   { to: '/habits', labelKey: 'common.nav.habits',  ariaLabelKey: 'common.nav.habitsAria',  icon: IoFlame },
   { to: '/cup',    labelKey: 'common.nav.cup',     ariaLabelKey: 'common.nav.cupAria',     icon: IoFootball },
   { to: '/books',  labelKey: 'common.nav.books',   ariaLabelKey: 'common.nav.booksAria',   icon: IoBook },
@@ -29,7 +31,11 @@ function NavItemButton({
   label,
   ariaLabel,
   icon: Icon,
-}: { to: string; label: string; ariaLabel: string; icon: NavItemDef['icon'] }) {
+  activeOn = [],
+}: { to: string; label: string; ariaLabel: string; icon: NavItemDef['icon']; activeOn?: string[] }) {
+  const { pathname } = useLocation()
+  const extraActive = activeOn.some((prefix) => pathname.startsWith(prefix))
+
   return (
     <NavLink
       to={to}
@@ -37,33 +43,36 @@ function NavItemButton({
       aria-label={ariaLabel}
       className="flex flex-col items-center justify-center gap-0.5 w-full h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
     >
-      {({ isActive }) => (
-        <>
-          <span
-            className={cn(
-              'flex items-center justify-center w-14 h-8 rounded-full transition-colors duration-150',
-              isActive ? 'bg-brand' : 'bg-transparent',
-            )}
-            aria-hidden="true"
-          >
-            <Icon
-              size={22}
+      {({ isActive }) => {
+        const active = isActive || extraActive
+        return (
+          <>
+            <span
               className={cn(
-                'transition-colors duration-150',
-                isActive ? 'text-[#0A0A0F]' : 'text-chrome-muted',
+                'flex items-center justify-center w-14 h-8 rounded-full transition-colors duration-150',
+                active ? 'bg-brand' : 'bg-transparent',
               )}
-            />
-          </span>
-          <span
-            className={cn(
-              'text-[10px] font-medium leading-none transition-colors duration-150',
-              isActive ? 'text-brand' : 'text-chrome-muted',
-            )}
-          >
-            {label}
-          </span>
-        </>
-      )}
+              aria-hidden="true"
+            >
+              <Icon
+                size={22}
+                className={cn(
+                  'transition-colors duration-150',
+                  active ? 'text-[#0A0A0F]' : 'text-chrome-muted',
+                )}
+              />
+            </span>
+            <span
+              className={cn(
+                'text-[10px] font-medium leading-none transition-colors duration-150',
+                active ? 'text-brand' : 'text-chrome-muted',
+              )}
+            >
+              {label}
+            </span>
+          </>
+        )
+      }}
     </NavLink>
   )
 }
@@ -84,6 +93,7 @@ export function BottomNav() {
               label={t(item.labelKey)}
               ariaLabel={t(item.ariaLabelKey)}
               icon={item.icon}
+              activeOn={item.activeOn}
             />
           </li>
         ))}

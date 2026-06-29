@@ -4,41 +4,6 @@ import { Sheet, SheetContent, SheetTitle, SheetDescription } from '~/components/
 import { cn } from '~/lib/utils'
 import { CATEGORIES } from '~/data/editions'
 
-/* ─── Storage keys ───────────────────────────────────────────────────────── */
-
-const INTERESTS_KEY = 'tnws-interests'
-const INTERESTS_SET_KEY = 'tnws-interests-set'
-
-/* ─── Persistence helpers ────────────────────────────────────────────────── */
-
-export function loadInterests(): string[] {
-  try {
-    const raw = localStorage.getItem(INTERESTS_KEY)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
-
-export function saveInterests(slugs: string[]): void {
-  try {
-    localStorage.setItem(INTERESTS_KEY, JSON.stringify(slugs))
-    localStorage.setItem(INTERESTS_SET_KEY, '1')
-  } catch {
-    // storage unavailable — silently ignore
-  }
-}
-
-export function hasSetInterests(): boolean {
-  try {
-    return Boolean(localStorage.getItem(INTERESTS_SET_KEY))
-  } catch {
-    return false
-  }
-}
-
 /* ─── Category chip ──────────────────────────────────────────────────────── */
 
 function CategoryChip({
@@ -71,8 +36,12 @@ function CategoryChip({
       style={selected ? { backgroundColor: dotColor, borderColor: dotColor } : undefined}
     >
       <span
-        className={cn('w-2 h-2 rounded-full shrink-0', selected ? 'bg-white/70' : 'border border-chrome-muted')}
-        style={!selected ? { backgroundColor: dotColor + '33', borderColor: dotColor } : undefined}
+        className={cn('w-2 h-2 rounded-full shrink-0')}
+        style={
+          selected
+            ? { backgroundColor: 'rgba(255,255,255,0.7)' }
+            : { backgroundColor: dotColor + '33', border: `1px solid ${dotColor}` }
+        }
         aria-hidden="true"
       />
       {label}
@@ -93,10 +62,10 @@ type InterestsPickerProps = {
 export function InterestsPicker({ open, onClose, onSave, initialSlugs = [] }: InterestsPickerProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set(initialSlugs))
 
-  // Sync when sheet re-opens (user may have changed interests elsewhere)
   useEffect(() => {
     if (open) setSelected(new Set(initialSlugs))
-  }, [open, initialSlugs.join(',')])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const toggle = useCallback((slug: string) => {
     setSelected((prev) => {
@@ -116,14 +85,11 @@ export function InterestsPicker({ open, onClose, onSave, initialSlugs = [] }: In
   }
 
   function handleSave() {
-    const slugs = Array.from(selected)
-    saveInterests(slugs)
-    onSave(slugs)
+    onSave(Array.from(selected))
     onClose()
   }
 
   const allSelected = selected.size === CATEGORIES.length
-  const noneSelected = selected.size === 0
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
@@ -135,10 +101,7 @@ export function InterestsPicker({ open, onClose, onSave, initialSlugs = [] }: In
       >
         {/* Header */}
         <div className="flex items-start gap-3 px-4 pt-5 pb-3 shrink-0">
-          <span
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand/20 shrink-0"
-            aria-hidden="true"
-          >
+          <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-brand/20 shrink-0" aria-hidden="true">
             <IoSparkles size={20} className="text-brand" />
           </span>
           <div className="flex-1">
@@ -146,7 +109,7 @@ export function InterestsPicker({ open, onClose, onSave, initialSlugs = [] }: In
               O que você gosta de ler?
             </SheetTitle>
             <SheetDescription id="interests-desc" className="text-chrome-muted text-[13px] mt-0.5">
-              Escolha seus temas favoritos para filtrar o feed
+              Escolha seus newsletters favoritos para filtrar o feed
             </SheetDescription>
           </div>
           <button
@@ -159,7 +122,7 @@ export function InterestsPicker({ open, onClose, onSave, initialSlugs = [] }: In
           </button>
         </div>
 
-        {/* Select/clear all */}
+        {/* Select all / count */}
         <div className="flex items-center gap-3 px-4 pb-3 shrink-0">
           <button
             type="button"
@@ -173,12 +136,8 @@ export function InterestsPicker({ open, onClose, onSave, initialSlugs = [] }: In
           </span>
         </div>
 
-        {/* Chips grid */}
-        <div
-          className="flex-1 overflow-y-auto px-4 pb-4"
-          role="group"
-          aria-label="Categorias de interesse"
-        >
+        {/* Chips */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4" role="group" aria-label="Categorias de interesse">
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
               <CategoryChip
@@ -200,7 +159,7 @@ export function InterestsPicker({ open, onClose, onSave, initialSlugs = [] }: In
             onClick={handleSave}
             className="w-full py-3.5 rounded-xl bg-brand text-[#0A0A0F] font-bold text-[15px] hover:bg-brand-dim transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
           >
-            {noneSelected ? 'Ver todas as edições' : `Ver feed personalizado (${selected.size})`}
+            {selected.size === 0 ? 'Ver todas as edições' : `Filtrar por ${selected.size} newsletter${selected.size > 1 ? 's' : ''}`}
           </button>
         </div>
       </SheetContent>

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useLoaderData, useNavigate } from 'react-router'
-import { IoOptions, IoClose, IoChevronBack, IoChevronForward } from 'react-icons/io5'
+import { useState, useRef, useMemo, useCallback } from 'react'
+import { useLoaderData, useSearchParams } from 'react-router'
+import { IoOptions, IoClose, IoChevronBack, IoChevronForward, IoSearch } from 'react-icons/io5'
 import type { Route } from './+types/home'
 import { Input } from '~/components/ui/input'
 import {
@@ -10,18 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { EditionCard, EditionCardSkeleton, TagChip } from '~/components/edition-card'
+import { InterestsPicker } from '~/components/interests-picker'
 import {
-  EditionCard,
-  EditionCardFeatured,
-  EditionCardSkeleton,
-  EditionCardFeaturedSkeleton,
-} from '~/components/edition-card'
-import {
-  InterestsPicker,
-  loadInterests,
-  hasSetInterests,
-} from '~/components/interests-picker'
-import { fetchEditionsList, categorySlugFromCaderno } from '~/data/api'
+  fetchEditionsList,
+  categorySlugFromCaderno,
+  parseEditionTags,
+} from '~/data/api'
 import { getCategory } from '~/data/editions'
 
 /* ─── Meta ───────────────────────────────────────────────────────────────── */
@@ -33,100 +28,274 @@ export function meta() {
   ]
 }
 
-/* ─── Loader ─────────────────────────────────────────────────────────────── */
+/* ─── Loader — reads only API params (q, page) ───────────────────────────── */
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url)
   const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1)
-  const search = url.searchParams.get('search') ?? ''
-  const { editions, pagination } = await fetchEditionsList({ page, search: search.trim() })
-  return { editions, pagination, page, search }
+  const q = url.searchParams.get('q') ?? ''
+  const { editions, pagination } = await fetchEditionsList({ page, search: q.trim() })
+  return { editions, pagination, page, q }
 }
 
-/* ─── Sort types ─────────────────────────────────────────────────────────── */
+/* ─── Sort options ───────────────────────────────────────────────────────── */
 
 type SortKey = 'newest' | 'views' | 'likes'
 
-/* ─── Sticky search bar ──────────────────────────────────────────────────── */
+const SORT_LABELS: Record<SortKey, string> = {
+  newest: 'Mais recentes',
+  views: 'Mais lidos',
+  likes: 'Mais curtidos',
+}
 
-function SearchBar({
-  searchInput,
-  onSearch,
+/* ─── URL state helpers (following ao.dev pattern) ───────────────────────── */
+
+function useUrlFilters() {
+  const [params, setParams] = useSearchParams()
+
+  const q = params.get('q') ?? ''
+  const sort = (params.get('sort') ?? 'newest') as SortKey
+  const activeTags = (params.get('tags') ?? '').split(',').filter(Boolean)
+  const activeInterests = (params.get('interests') ?? '').split(',').filter(Boolean)
+  const page = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1)
+
+  // Filter changes — replace history (don't pollute stack)
+  const setFilter = useCallback(
+    (key: string, value: string | undefined) => {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (value) next.set(key, value)
+          else next.delete(key)
+          next.delete('page')
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setParams],
+  )
+
+  // Page changes — push history (enables browser back)
+  const goToPage = useCallback(
+    (n: number) => {
+      setParams((prev) => {
+        const next = new URLSearchParams(prev)
+        if (n > 1) next.set('page', String(n))
+        else next.delete('page')
+        return next
+      })
+      document.getElementById('main-content')?.scrollTo({ top: 0, behavior: 'instant' })
+    },
+    [setParams],
+  )
+
+  const clearFilters = useCallback(() => {
+    setParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete('q')
+      next.delete('sort')
+      next.delete('tags')
+      next.delete('interests')
+      next.delete('page')
+      return next
+    }, { replace: true })
+  }, [setParams])
+
+  const hasClientFilters = activeTags.length > 0 || activeInterests.length > 0
+
+  return { q, sort, activeTags, activeInterests, page, setFilter, goToPage, clearFilters, hasClientFilters }
+}
+
+/* ─── Search input (debounced URL update) ────────────────────────────────── */
+
+function SearchInput({ q, setFilter }: { q: string; setFilter: (k: string, v: string | undefined) => void }) {
+  const [value, setValue] = useState(q)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Sync when URL changes externally (e.g. clearFilters)
+  const prevQ = useRef(q)
+  if (prevQ.current !== q && value !== q) {
+    prevQ.current = q
+    setValue(q)
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value
+    setValue(v)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setFilter('q', v.trim() || undefined)
+    }, 400)
+  }
+
+  function handleClear() {
+    setValue('')
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    setFilter('q', undefined)
+  }
+
+  return (
+    <div className="relative flex-1 min-w-0">
+      <IoSearch
+        size={15}
+        className="absolute start-3 top-1/2 -translate-y-1/2 text-chrome-muted pointer-events-none"
+        aria-hidden="true"
+      />
+      <Input
+        type="search"
+        placeholder="Buscar edições..."
+        value={value}
+        onChange={handleChange}
+        className="h-9 ps-8 pe-8 text-[14px] bg-chrome-surface border-chrome-divider text-chrome-text placeholder:text-chrome-muted focus-visible:ring-brand rounded-xl"
+        aria-label="Buscar edições"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={handleClear}
+          aria-label="Limpar busca"
+          className="absolute end-2 top-1/2 -translate-y-1/2 text-chrome-muted hover:text-chrome-text"
+        >
+          <IoClose size={14} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+/* ─── Toolbar ────────────────────────────────────────────────────────────── */
+
+function Toolbar({
+  q,
   sort,
-  onSort,
-  interests,
+  activeTags,
+  activeInterests,
+  availableTags,
+  setFilter,
   onOpenPicker,
 }: {
-  searchInput: string
-  onSearch: (v: string) => void
+  q: string
   sort: SortKey
-  onSort: (v: SortKey) => void
-  interests: string[]
+  activeTags: string[]
+  activeInterests: string[]
+  availableTags: string[]
+  setFilter: (k: string, v: string | undefined) => void
   onOpenPicker: () => void
 }) {
+  const interestCount = activeInterests.length
+  const hasTagFilter = activeTags.length > 0
+
+  function toggleTag(tag: string) {
+    const next = activeTags.includes(tag)
+      ? activeTags.filter((t) => t !== tag)
+      : [...activeTags, tag]
+    setFilter('tags', next.length ? next.join(',') : undefined)
+  }
+
   return (
     <div className="sticky top-0 z-10 bg-chrome-bg border-b border-chrome-divider">
-      <div className="flex items-center gap-2 px-3 py-2.5">
-        <Input
-          type="search"
-          placeholder="Buscar edições..."
-          value={searchInput}
-          onChange={(e) => onSearch(e.target.value)}
-          className="flex-1 h-9 text-[14px] bg-chrome-surface border-chrome-divider text-chrome-text placeholder:text-chrome-muted focus-visible:ring-brand rounded-xl"
-          aria-label="Buscar edições"
-        />
+      {/* Main row */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        <SearchInput q={q} setFilter={setFilter} />
 
-        <Select value={sort} onValueChange={(v) => onSort(v as SortKey)}>
+        <Select
+          value={sort}
+          onValueChange={(v) => setFilter('sort', v === 'newest' ? undefined : v)}
+        >
           <SelectTrigger
-            className="h-9 w-auto min-w-[110px] text-[13px] bg-chrome-surface border-chrome-divider text-chrome-text rounded-xl gap-1 focus:ring-brand"
+            className="h-9 w-auto min-w-[108px] shrink-0 text-[12px] bg-chrome-surface border-chrome-divider text-chrome-text rounded-xl gap-1 focus:ring-brand"
             aria-label="Ordenar edições"
           >
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-chrome-surface border-chrome-divider text-chrome-text">
-            <SelectItem value="newest" className="text-[13px] focus:bg-brand/10">Mais recentes</SelectItem>
-            <SelectItem value="views"  className="text-[13px] focus:bg-brand/10">Mais lidos</SelectItem>
-            <SelectItem value="likes"  className="text-[13px] focus:bg-brand/10">Mais curtidos</SelectItem>
+            {(Object.entries(SORT_LABELS) as [SortKey, string][]).map(([key, label]) => (
+              <SelectItem key={key} value={key} className="text-[13px] focus:bg-brand/10">
+                {label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
         <button
           type="button"
           onClick={onOpenPicker}
-          aria-label={interests.length ? `Interesses ativos: ${interests.length}` : 'Filtrar por interesses'}
-          className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-chrome-surface border border-chrome-divider text-chrome-text hover:border-chrome-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand shrink-0"
+          aria-label={interestCount ? `${interestCount} newsletters selecionados` : 'Filtrar por newsletter'}
+          className="relative flex items-center justify-center w-9 h-9 shrink-0 rounded-xl bg-chrome-surface border border-chrome-divider text-chrome-text hover:border-chrome-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <IoOptions size={18} aria-hidden="true" />
-          {interests.length > 0 && (
+          {interestCount > 0 && (
             <span
               className="absolute -top-1 -end-1 flex items-center justify-center w-4 h-4 rounded-full bg-brand text-[#0A0A0F] font-bold text-[9px] leading-none"
               aria-hidden="true"
             >
-              {interests.length}
+              {interestCount}
             </span>
           )}
         </button>
       </div>
 
-      {/* Active interests strip */}
-      {interests.length > 0 && (
+      {/* Content tag filter — only shown when current page has tagged editions */}
+      {availableTags.length > 0 && (
         <div
           className="flex gap-1.5 px-3 pb-2 overflow-x-auto scrollbar-none"
-          aria-label="Interesses ativos"
+          aria-label="Filtrar por tag"
+          role="group"
         >
-          {interests.map((slug) => {
+          {availableTags.map((tag) => (
+            <TagChip
+              key={tag}
+              tag={tag}
+              active={activeTags.includes(tag)}
+              onClick={toggleTag}
+            />
+          ))}
+          {hasTagFilter && (
+            <button
+              type="button"
+              onClick={() => setFilter('tags', undefined)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-chrome-muted hover:text-chrome-text transition-colors shrink-0"
+            >
+              <IoClose size={10} aria-hidden="true" /> limpar
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Active interest chips */}
+      {activeInterests.length > 0 && (
+        <div
+          className="flex gap-1.5 px-3 pb-2 overflow-x-auto scrollbar-none"
+          aria-label="Newsletters ativos"
+        >
+          {activeInterests.map((slug) => {
             const cat = getCategory(slug)
             if (!cat) return null
             return (
-              <span
+              <button
                 key={slug}
-                className="inline-flex items-center shrink-0 gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white leading-none"
+                type="button"
+                onClick={() => {
+                  const next = activeInterests.filter((s) => s !== slug)
+                  setFilter('interests', next.length ? next.join(',') : undefined)
+                }}
+                className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold text-white leading-none hover:opacity-80 transition-opacity"
                 style={{ backgroundColor: cat.dotColor }}
+                aria-label={`Remover filtro ${cat.label}`}
               >
                 {cat.label}
-              </span>
+                <IoClose size={9} aria-hidden="true" />
+              </button>
             )
           })}
+          <button
+            type="button"
+            onClick={() => setFilter('interests', undefined)}
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-chrome-muted hover:text-chrome-text transition-colors shrink-0"
+          >
+            <IoClose size={10} aria-hidden="true" /> limpar
+          </button>
         </div>
       )}
     </div>
@@ -135,58 +304,71 @@ function SearchBar({
 
 /* ─── Empty state ────────────────────────────────────────────────────────── */
 
-function EmptyState({ search }: { search: string }) {
+function EmptyState({
+  q,
+  hasFilters,
+  onClear,
+}: {
+  q: string
+  hasFilters: boolean
+  onClear: () => void
+}) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh] px-8 text-center gap-4">
       <span className="text-5xl" aria-hidden="true">🔍</span>
       <p className="text-chrome-text font-bold text-[17px]">
-        {search ? `Nenhum resultado para "${search}"` : 'Nenhuma edição disponível'}
+        {q ? `Nenhum resultado para "${q}"` : 'Nenhuma edição encontrada'}
       </p>
       <p className="text-chrome-muted text-[14px]">
-        {search
-          ? 'Tente palavras-chave diferentes ou remova os filtros'
-          : 'Verifique sua conexão e tente novamente'}
+        {q ? 'Tente palavras-chave diferentes' : 'Ajuste os filtros e tente novamente'}
       </p>
+      {hasFilters && (
+        <button
+          type="button"
+          onClick={onClear}
+          className="px-5 py-2.5 rounded-xl border border-chrome-divider bg-chrome-surface text-chrome-text text-[14px] font-medium hover:border-chrome-muted transition-colors"
+        >
+          Limpar filtros
+        </button>
+      )}
     </div>
   )
 }
 
 /* ─── Pagination ─────────────────────────────────────────────────────────── */
 
-function Pagination({
-  page,
-  totalPages,
-  onPage,
-}: {
-  page: number
-  totalPages: number
-  onPage: (n: number) => void
-}) {
+function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (n: number) => void }) {
   if (totalPages <= 1) return null
 
   const start = Math.max(1, page - 2)
   const end = Math.min(totalPages, start + 4)
   const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i)
 
+  function btnCls(active: boolean) {
+    return [
+      'flex items-center justify-center w-9 h-9 rounded-xl text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+      active
+        ? 'bg-brand text-[#0A0A0F] border border-brand'
+        : 'border border-chrome-divider bg-chrome-surface text-chrome-text hover:border-chrome-muted',
+    ].join(' ')
+  }
+
   return (
-    <nav
-      className="flex items-center justify-center gap-1.5 px-4 py-6"
-      aria-label="Paginação"
-    >
+    <nav className="flex items-center justify-center gap-1 px-4 py-6" aria-label="Paginação">
       <button
         type="button"
         onClick={() => onPage(page - 1)}
         disabled={page <= 1}
         aria-label="Página anterior"
-        className="flex items-center justify-center w-9 h-9 rounded-xl border border-chrome-divider bg-chrome-surface text-chrome-text disabled:opacity-40 disabled:cursor-not-allowed hover:border-chrome-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className={btnCls(false) + ' disabled:opacity-40 disabled:cursor-not-allowed'}
       >
-        <IoChevronBack size={16} aria-hidden="true" />
+        <IoChevronBack size={15} aria-hidden="true" />
       </button>
 
       {start > 1 && (
         <>
-          <button type="button" onClick={() => onPage(1)} className={pageBtn(false)}>1</button>
-          {start > 2 && <span className="text-chrome-muted text-[13px] px-1">…</span>}
+          <button type="button" onClick={() => onPage(1)} className={btnCls(false)}>1</button>
+          {start > 2 && <span className="text-chrome-muted text-[13px] px-0.5">…</span>}
         </>
       )}
 
@@ -196,8 +378,7 @@ function Pagination({
           type="button"
           onClick={() => onPage(p)}
           aria-current={p === page ? 'page' : undefined}
-          aria-label={`Página ${p}`}
-          className={pageBtn(p === page)}
+          className={btnCls(p === page)}
         >
           {p}
         </button>
@@ -205,8 +386,8 @@ function Pagination({
 
       {end < totalPages && (
         <>
-          {end < totalPages - 1 && <span className="text-chrome-muted text-[13px] px-1">…</span>}
-          <button type="button" onClick={() => onPage(totalPages)} className={pageBtn(false)}>
+          {end < totalPages - 1 && <span className="text-chrome-muted text-[13px] px-0.5">…</span>}
+          <button type="button" onClick={() => onPage(totalPages)} className={btnCls(false)}>
             {totalPages}
           </button>
         </>
@@ -217,76 +398,52 @@ function Pagination({
         onClick={() => onPage(page + 1)}
         disabled={page >= totalPages}
         aria-label="Próxima página"
-        className="flex items-center justify-center w-9 h-9 rounded-xl border border-chrome-divider bg-chrome-surface text-chrome-text disabled:opacity-40 disabled:cursor-not-allowed hover:border-chrome-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        className={btnCls(false) + ' disabled:opacity-40 disabled:cursor-not-allowed'}
       >
-        <IoChevronForward size={16} aria-hidden="true" />
+        <IoChevronForward size={15} aria-hidden="true" />
       </button>
     </nav>
   )
 }
 
-function pageBtn(active: boolean) {
-  return [
-    'flex items-center justify-center w-9 h-9 rounded-xl text-[14px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand',
-    active
-      ? 'bg-brand text-[#0A0A0F] border border-brand'
-      : 'border border-chrome-divider bg-chrome-surface text-chrome-text hover:border-chrome-muted',
-  ].join(' ')
-}
-
 /* ─── Home ───────────────────────────────────────────────────────────────── */
 
 export default function Home() {
-  const { editions, pagination, page, search } = useLoaderData<typeof loader>()
-  const navigate = useNavigate()
+  const { editions, pagination } = useLoaderData<typeof loader>()
+  const { q, sort, activeTags, activeInterests, page, setFilter, goToPage, clearFilters, hasClientFilters } =
+    useUrlFilters()
 
-  // Interests — client-only (localStorage); null = not hydrated yet (SSR / first render)
-  const [interests, setInterests] = useState<string[] | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  useEffect(() => {
-    const saved = loadInterests()
-    setInterests(saved)
-    if (!hasSetInterests()) {
-      // Small delay so the sheet doesn't flash on initial load
-      const t = setTimeout(() => setPickerOpen(true), 800)
-      return () => clearTimeout(t)
-    }
-  }, [])
-
-  // Sort (client-only)
-  const [sort, setSort] = useState<SortKey>('newest')
-
-  // Search input (controlled; debounced navigation)
-  const [searchInput, setSearchInput] = useState(search)
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleSearch = useCallback((value: string) => {
-    setSearchInput(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      navigate(`/?search=${encodeURIComponent(value.trim())}&page=1`)
-    }, 450)
-  }, [navigate])
-
-  function goToPage(n: number) {
-    navigate(`/?page=${n}&search=${encodeURIComponent(search)}`)
-    document.getElementById('main-content')?.scrollTo({ top: 0, behavior: 'instant' })
-  }
-
-  // Client-side filter + sort (interests filter matches server list to user prefs)
+  // Client-side sort + filter applied to current API page
   const displayed = useMemo(() => {
     let list = editions
-    if (interests && interests.length > 0) {
-      const set = new Set(interests)
+
+    if (activeInterests.length > 0) {
+      const set = new Set(activeInterests)
       list = list.filter((e) => set.has(categorySlugFromCaderno(e.cadernoId)))
     }
+
+    if (activeTags.length > 0) {
+      const set = new Set(activeTags)
+      list = list.filter((e) => parseEditionTags(e.contentTags).some((t) => set.has(t)))
+    }
+
     if (sort === 'views') return [...list].sort((a, b) => b.viewsCount - a.viewsCount)
     if (sort === 'likes') return [...list].sort((a, b) => b.likesCount - a.likesCount)
     return list
-  }, [editions, interests, sort])
+  }, [editions, activeInterests, activeTags, sort])
 
-  const [featured, ...rest] = displayed
+  // Unique content tags from the current page for the tag filter chips
+  const availableTags = useMemo(() => {
+    const set = new Set<string>()
+    for (const e of editions) {
+      for (const t of parseEditionTags(e.contentTags)) set.add(t)
+    }
+    return [...set].sort()
+  }, [editions])
+
+  const hasAnyFilter = !!(q || hasClientFilters)
 
   return (
     <>
@@ -294,64 +451,71 @@ export default function Home() {
       <InterestsPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSave={(slugs) => setInterests(slugs)}
-        initialSlugs={interests ?? []}
+        onSave={(slugs) => setFilter('interests', slugs.length ? slugs.join(',') : undefined)}
+        initialSlugs={activeInterests}
       />
 
-      {/* Search / sort / filter bar */}
-      <SearchBar
-        searchInput={searchInput}
-        onSearch={handleSearch}
+      {/* Sticky toolbar */}
+      <Toolbar
+        q={q}
         sort={sort}
-        onSort={setSort}
-        interests={interests ?? []}
+        activeTags={activeTags}
+        activeInterests={activeInterests}
+        availableTags={availableTags}
+        setFilter={setFilter}
         onOpenPicker={() => setPickerOpen(true)}
       />
 
-      {/* Content */}
+      {/* Feed */}
       <div className="px-3 sm:px-4 pb-4">
         {/* Page heading */}
         <div className="py-4 pb-3">
-          <h1 className="text-chrome-text font-black text-[22px] leading-none">
-            seu feed
-          </h1>
+          <h1 className="text-chrome-text font-black text-[22px] leading-none">seu feed</h1>
           <p className="text-chrome-muted text-[13px] mt-1">
             {pagination.total > 0
               ? `${pagination.total.toLocaleString('pt-BR')} edições`
-              : 'carregando…'}
-            {interests && interests.length > 0
-              ? ` · ${interests.length} interesse${interests.length > 1 ? 's' : ''} ativo${interests.length > 1 ? 's' : ''}`
-              : ''}
+              : '…'}
+            {activeInterests.length > 0 &&
+              ` · ${activeInterests.length} newsletter${activeInterests.length > 1 ? 's' : ''}`}
+            {activeTags.length > 0 && ` · ${activeTags.length} tag${activeTags.length > 1 ? 's' : ''}`}
           </p>
         </div>
 
         {displayed.length === 0 ? (
-          <EmptyState search={search} />
+          <EmptyState q={q} hasFilters={hasAnyFilter} onClear={clearFilters} />
         ) : (
-          <div className="space-y-4">
-            {/* Featured hero card */}
-            {featured && (
-              <EditionCardFeatured edition={featured} />
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {displayed.map((edition) => (
+                <EditionCard
+                  key={edition.id}
+                  edition={edition}
+                  onTagClick={(tag) => {
+                    const next = activeTags.includes(tag)
+                      ? activeTags.filter((t) => t !== tag)
+                      : [...activeTags, tag]
+                    setFilter('tags', next.length ? next.join(',') : undefined)
+                  }}
+                  activeTags={activeTags}
+                />
+              ))}
+            </div>
+
+            {/* Pagination — API-level only; hide when client-side filter narrows results */}
+            {!hasClientFilters && (
+              <Pagination
+                page={page}
+                totalPages={pagination.totalPages}
+                onPage={goToPage}
+              />
             )}
 
-            {/* Grid */}
-            {rest.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                {rest.map((edition) => (
-                  <EditionCard key={edition.id} edition={edition} />
-                ))}
-              </div>
+            {hasClientFilters && pagination.totalPages > 1 && (
+              <p className="text-center text-chrome-muted text-[12px] py-4">
+                Filtros ativos nesta página · use a busca para pesquisar em todas as {pagination.totalPages} páginas
+              </p>
             )}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {displayed.length > 0 && (
-          <Pagination
-            page={page}
-            totalPages={pagination.totalPages}
-            onPage={goToPage}
-          />
+          </>
         )}
       </div>
     </>
