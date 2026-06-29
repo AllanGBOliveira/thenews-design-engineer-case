@@ -277,9 +277,21 @@ export default function EditionDetail() {
     next?: Edition | null
   } | null
   const edition = stateData?.edition ?? loaderData.edition
-  // State neighbors are optimistic (instant); loaderData fills the unknown side.
-  const prev = stateData && 'prev' in stateData ? stateData.prev : loaderData.prev
-  const next = stateData && 'next' in stateData ? stateData.next : loaderData.next
+
+  // loaderData.prev/next are only reliable when the loader has completed for
+  // THIS slug. During a pending navigation loaderData still holds the previous
+  // post's values — comparing slugs detects the stale-data window.
+  const currentSlug = location.pathname.replace(/^\//, '')
+  const loaderIsFresh = loaderData.edition?.slug === currentSlug
+
+  // Known side → state (instant). Unknown side → loaderData only when fresh
+  // (loader finished for this slug); otherwise null to avoid showing stale data.
+  const prev = stateData && 'prev' in stateData
+    ? stateData.prev
+    : loaderIsFresh ? loaderData.prev : null
+  const next = stateData && 'next' in stateData
+    ? stateData.next
+    : loaderIsFresh ? loaderData.next : null
 
   const catSlug = edition ? categorySlugFromCaderno(edition.cadernoId) : 'the-news'
   const category = getCategory(catSlug)
