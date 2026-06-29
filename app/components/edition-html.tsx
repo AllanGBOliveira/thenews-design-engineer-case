@@ -90,6 +90,16 @@ function sanitize(html: string): string {
     .replace(/^[\s\S]*?<body[^>]*>/i, '')
     .replace(/<\/body>[\s\S]*$/i, '')
 
+  // Strip beehiiv preheader (hidden preview text — display:none, max-height:0)
+  body = body.replace(/<div[^>]*max-height\s*:\s*0px[^>]*>[\s\S]*?<\/div>/i, '')
+
+  // Strip beehiiv "Leia Online / View in Browser" header row that precedes
+  // tr#content-blocks in every beehiiv email layout
+  body = body.replace(
+    /<tr[^>]*\bid=["']header["'][^>]*>[\s\S]*?(?=<tr[^>]*\bid=["']content-blocks["'])/i,
+    '',
+  )
+
   // Strip tracking pixels
   body = body
     .replace(/<img[^>]*testeswaffle\.org[^>]*\/?>/gi, '')

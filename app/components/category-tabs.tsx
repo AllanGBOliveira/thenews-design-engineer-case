@@ -57,7 +57,7 @@ export function CategoryTabs({ activeSlug, onSelect }: CategoryTabsProps) {
     <nav
       aria-label="Categorias de newsletter"
       className="sticky z-20 bg-chrome-bg border-b border-chrome-divider"
-      style={{ top: 56 }}
+      style={{ top: 0 }}
     >
       <div
         ref={trackRef}

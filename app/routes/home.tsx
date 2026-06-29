@@ -173,6 +173,7 @@ export default function Home() {
         <ReadingProgress
           contentRef={contentRef}
           onComplete={handleReadingComplete}
+          storageKey={editionMap['the-news']?.id}
         />
       )}
 

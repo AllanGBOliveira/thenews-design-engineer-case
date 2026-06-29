@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { IoDocumentText, IoTime, IoChevronUp, IoChevronDown, IoCheckmarkCircle } from 'react-icons/io5'
 import { cn } from '~/lib/utils'
 
 type ReadingProgressProps = {
   contentRef: React.RefObject<HTMLElement | null>
   onComplete?: () => void
+  storageKey?: string
 }
 
 function formatTime(seconds: number): string {
@@ -22,13 +23,25 @@ function getScrollContainer(el: HTMLElement | null): HTMLElement | null {
   return getScrollContainer(parent)
 }
 
-export function ReadingProgress({ contentRef, onComplete }: ReadingProgressProps) {
-  const [percent, setPercent] = useState(0)
+function loadSavedMax(storageKey: string | undefined): number {
+  if (!storageKey) return 0
+  try {
+    return parseInt(localStorage.getItem(`tnws-progress-${storageKey}`) ?? '0', 10) || 0
+  } catch { return 0 }
+}
+
+export function ReadingProgress({ contentRef, onComplete, storageKey }: ReadingProgressProps) {
+  const savedMax = loadSavedMax(storageKey)
+
+  // maxRef tracks the furthest scroll reached without triggering re-renders
+  const maxRef = useRef(savedMax)
+  const completedRef = useRef(savedMax >= 100)
+
+  const [percent, setPercent] = useState(savedMax)
   const [elapsed, setElapsed] = useState(0)
   const [collapsed, setCollapsed] = useState(false)
-  const [completed, setCompleted] = useState(false)
+  const [completed, setCompleted] = useState(savedMax >= 100)
 
-  /* Scroll-based percentage — tracks nearest scrollable ancestor */
   const handleScroll = useCallback(() => {
     const content = contentRef.current
     if (!content) return
@@ -38,13 +51,25 @@ export function ReadingProgress({ contentRef, onComplete }: ReadingProgressProps
       ? container.scrollHeight - container.clientHeight
       : document.documentElement.scrollHeight - window.innerHeight
     if (scrollHeight <= 0) return
+
     const pct = Math.round((Math.min(scrollTop, scrollHeight) / scrollHeight) * 100)
-    setPercent(pct)
-    if (pct >= 100 && !completed) {
-      setCompleted(true)
-      onComplete?.()
+
+    // Progress only moves forward — scrolling back never reduces the indicator
+    if (pct > maxRef.current) {
+      maxRef.current = pct
+      setPercent(pct)
+
+      if (storageKey) {
+        try { localStorage.setItem(`tnws-progress-${storageKey}`, String(pct)) } catch { /* ignore */ }
+      }
+
+      if (pct >= 100 && !completedRef.current) {
+        completedRef.current = true
+        setCompleted(true)
+        onComplete?.()
+      }
     }
-  }, [contentRef, completed, onComplete])
+  }, [contentRef, onComplete, storageKey])
 
   useEffect(() => {
     const content = contentRef.current
@@ -77,7 +102,7 @@ export function ReadingProgress({ contentRef, onComplete }: ReadingProgressProps
   return (
     <div
       className="sticky z-10 bg-chrome-bg border-b border-chrome-divider"
-      style={{ top: 56 + 44 }}
+      style={{ top: 44 }}
       aria-label={`Progresso de leitura: ${percent}%`}
       role="status"
       aria-live="off"
@@ -90,7 +115,6 @@ export function ReadingProgress({ contentRef, onComplete }: ReadingProgressProps
               className="absolute top-0 left-0 h-1 bg-brand rounded-full transition-all duration-300"
               style={{ width: dotPosition }}
             />
-            {/* Dot / checkmark */}
             {completed ? (
               <IoCheckmarkCircle
                 size={14}
