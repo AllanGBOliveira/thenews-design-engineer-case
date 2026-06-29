@@ -6,12 +6,12 @@
 :root {
   --brand: #FECF00;
   --brand-dim: #FEDB48;
-  --chrome-bg: #FFFFFF;
+  --chrome-bg: #FFF;
   --chrome-surface: #F5F5F5;
   --chrome-text: #0A0A0F;
   --chrome-muted: #74748A;
-  --chrome-border: rgba(254, 207, 0, 0.20);
-  --chrome-divider: rgba(0, 0, 0, 0.07);
+  --chrome-border: rgb(254 207 0 / 20%);
+  --chrome-divider: rgb(0 0 0 / 7%);
   --badge-red: #EF4444;
 }
 
@@ -55,8 +55,8 @@
   --chrome-surface: #1E1E28;
   --chrome-text: #F0F0F0;
   --chrome-muted: #74748A;
-  --chrome-border: rgba(254, 207, 0, 0.15);
-  --chrome-divider: rgba(255, 255, 255, 0.07);
+  --chrome-border: rgb(254 207 0 / 15%);
+  --chrome-divider: rgb(255 255 255 / 7%);
   --background: oklch(14.5% 0 0deg);
   --foreground: oklch(98.5% 0 0deg);
   --card: oklch(20.5% 0 0deg);
