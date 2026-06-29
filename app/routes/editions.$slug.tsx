@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLoaderData, useLocation, useNavigate } from 'react-router'
-import { IoArrowBack, IoFlash, IoGlobeOutline } from 'react-icons/io5'
+import { IoArrowBack, IoFlash, IoGlobeOutline, IoChevronBack, IoChevronForward } from 'react-icons/io5'
 import type { Route } from './+types/editions.$slug'
 import { ReadingProgress } from '~/components/reading-progress'
 import { XpToast } from '~/components/xp-toast'
@@ -9,7 +9,7 @@ import { QuizScreen } from '~/components/quiz-screen'
 import { EditionHtml } from '~/components/edition-html'
 import { Badge } from '~/components/ui/badge'
 import {
-  fetchEditionBySlug,
+  fetchEditionWithNeighbors,
   categorySlugFromCaderno,
   parseEditionTags,
   type Edition,
@@ -20,8 +20,8 @@ import { getCategory, getQuiz } from '~/data/editions'
 
 export async function loader({ params }: Route.LoaderArgs) {
   const slug = params.slug ?? ''
-  const edition = await fetchEditionBySlug(slug)
-  return { edition }
+  const { edition, prev, next } = await fetchEditionWithNeighbors(slug)
+  return { edition, prev, next }
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -151,6 +151,82 @@ function FloatingQuizButton({ onClick }: { onClick: () => void }) {
   )
 }
 
+/* ─── Edition navigation (prev / next) ──────────────────────────────────── */
+
+function NavCard({
+  edition,
+  direction,
+}: {
+  edition: Edition
+  direction: 'prev' | 'next'
+}) {
+  const catSlug = categorySlugFromCaderno(edition.cadernoId)
+  const category = getCategory(catSlug)
+  const isNext = direction === 'next'
+  const date = edition.publishDate
+    ? new Date(edition.publishDate + 'T12:00:00').toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+      })
+    : null
+
+  return (
+    <Link
+      to={`/${edition.slug}`}
+      state={{ edition }}
+      className={[
+        'flex flex-col gap-2 p-4 rounded-xl border border-chrome-divider bg-chrome-surface',
+        'hover:border-chrome-muted transition-colors group',
+        isNext ? 'items-end text-right' : 'items-start text-left',
+      ].join(' ')}
+    >
+      <span className="flex items-center gap-1 text-chrome-muted text-[11px] font-medium">
+        {!isNext && <IoChevronBack size={11} aria-hidden="true" />}
+        {isNext ? 'Próximo post' : 'Post anterior'}
+        {isNext && <IoChevronForward size={11} aria-hidden="true" />}
+      </span>
+
+      <span
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white leading-none"
+        style={{ backgroundColor: category?.dotColor ?? '#F97316' }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-white/60 shrink-0" aria-hidden="true" />
+        {category?.label ?? 'the news'}
+      </span>
+
+      <p className="text-chrome-text font-semibold text-[13px] leading-snug line-clamp-2 group-hover:text-brand transition-colors">
+        {edition.subjectLine}
+      </p>
+
+      {date && (
+        <time dateTime={edition.publishDate ?? undefined} className="text-chrome-muted text-[11px]">
+          {date}
+        </time>
+      )}
+    </Link>
+  )
+}
+
+function EditionNav({ prev, next }: { prev: Edition | null; next: Edition | null }) {
+  if (!prev && !next) return null
+
+  return (
+    <nav aria-label="Navegação entre posts" className="border-t border-chrome-divider px-4 py-6">
+      <p className="text-chrome-muted text-[11px] font-semibold uppercase tracking-widest mb-4">
+        Continue lendo
+      </p>
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+        {prev ? (
+          <NavCard edition={prev} direction="prev" />
+        ) : (
+          <div aria-hidden="true" />
+        )}
+        {next && <NavCard edition={next} direction="next" />}
+      </div>
+    </nav>
+  )
+}
+
 /* ─── Not found ──────────────────────────────────────────────────────────── */
 
 function EditionNotFound() {
@@ -180,6 +256,7 @@ export default function EditionDetail() {
   // Client nav passes full edition via Link state (avoids re-fetch + cache miss)
   const stateEdition = (location.state as { edition?: Edition } | null)?.edition
   const edition = stateEdition ?? loaderData.edition
+  const { prev, next } = loaderData
 
   const catSlug = edition ? categorySlugFromCaderno(edition.cadernoId) : 'the-news'
   const category = getCategory(catSlug)
@@ -238,7 +315,7 @@ export default function EditionDetail() {
       <article
         ref={contentRef}
         aria-label={`Edição: ${edition.subjectLine}`}
-        className="bg-chrome-bg min-h-screen"
+        className="bg-chrome-bg"
       >
         <EditionHtml
           html={edition.htmlContent}
@@ -246,6 +323,8 @@ export default function EditionDetail() {
           className="pb-8"
         />
       </article>
+
+      <EditionNav prev={prev} next={next} />
 
       <RatingSheet
         open={ratingOpen}

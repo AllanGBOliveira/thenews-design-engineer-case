@@ -157,7 +157,7 @@ function emptyResult(page: number, limit: number = DEFAULT_PAGE_SIZE): EditionLi
 }
 
 // For edition detail: check cache first, then paginate through recent pages.
-// Searches up to 5 pages (50 most recent editions) before giving up.
+// Searches up to 5 pages (100 most recent editions at limit=20) before giving up.
 export async function fetchEditionBySlug(slug: string): Promise<Edition | null> {
   const cached = getCachedEdition(slug)
   if (cached) return cached
@@ -174,6 +174,52 @@ export async function fetchEditionBySlug(slug: string): Promise<Edition | null> 
   }
 
   return null
+}
+
+export type EditionWithNeighbors = {
+  edition: Edition | null
+  // older edition (published before this one)
+  prev: Edition | null
+  // newer edition (published after this one)
+  next: Edition | null
+}
+
+// Returns the edition plus its immediate neighbors in the feed (newest-first API order).
+// Fetches the neighboring page when the edition lands at a page boundary.
+export async function fetchEditionWithNeighbors(slug: string): Promise<EditionWithNeighbors> {
+  for (let page = 1; page <= 5; page++) {
+    try {
+      const { editions, pagination } = await fetchEditionsList({ page })
+      const idx = editions.findIndex((e) => e.slug === slug)
+
+      if (idx === -1) {
+        if (page >= pagination.totalPages || editions.length < pagination.limit) break
+        continue
+      }
+
+      // API is newest-first: lower index = newer, higher index = older
+      let next: Edition | null = idx > 0 ? editions[idx - 1] : null
+      let prev: Edition | null = idx < editions.length - 1 ? editions[idx + 1] : null
+
+      // Edge of page — fetch the neighboring page to fill the gap
+      if (!next && page > 1) {
+        const prevPage = await fetchEditionsList({ page: page - 1 })
+        next = prevPage.editions[prevPage.editions.length - 1] ?? null
+      }
+      if (!prev && page < pagination.totalPages) {
+        const nextPage = await fetchEditionsList({ page: page + 1 })
+        prev = nextPage.editions[0] ?? null
+      }
+
+      return { edition: editions[idx], prev, next }
+    } catch {
+      break
+    }
+  }
+
+  // Fell through: edition not in recent pages but may still be in slug cache
+  const cached = getCachedEdition(slug)
+  return { edition: cached ?? null, prev: null, next: null }
 }
 
 /* ─── Backward-compat exports (used by existing home.tsx / edition detail) ─ */
