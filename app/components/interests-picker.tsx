@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { IoNewspaper, IoClose, IoCheckmark, IoPricetag, IoCalendarOutline, IoLockOpenOutline } from 'react-icons/io5'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '~/components/ui/sheet'
 import { cn } from '~/lib/utils'
@@ -126,20 +126,10 @@ export function InterestsPicker({
   const [period, setPeriod] = useState<string | undefined>(initialPeriod)
   const [audience, setAudience] = useState<string | undefined>(initialAudience)
 
-  useEffect(() => {
-    if (open) {
-      setInterests(new Set(initialInterests))
-      setTags(new Set(initialTags))
-      setPeriod(initialPeriod)
-      setAudience(initialAudience)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
   const toggleInterest = useCallback((slug: string) => {
     setInterests((prev) => {
       const next = new Set(prev)
-      next.has(slug) ? next.delete(slug) : next.add(slug)
+      if (next.has(slug)) { next.delete(slug) } else { next.add(slug) }
       return next
     })
   }, [])
@@ -147,7 +137,7 @@ export function InterestsPicker({
   const toggleTag = useCallback((tag: string) => {
     setTags((prev) => {
       const next = new Set(prev)
-      next.has(tag) ? next.delete(tag) : next.add(tag)
+      if (next.has(tag)) { next.delete(tag) } else { next.add(tag) }
       return next
     })
   }, [])

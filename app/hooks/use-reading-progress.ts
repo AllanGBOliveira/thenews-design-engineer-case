@@ -32,6 +32,7 @@ export function useReadingProgress(
   // Load saved progress from IndexedDB whenever editionId changes
   useEffect(() => {
     if (!editionId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({ progress: 0, completed: false, loaded: true })
       return
     }

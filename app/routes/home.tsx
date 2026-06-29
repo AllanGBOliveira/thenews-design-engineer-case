@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useLoaderData, useSearchParams } from 'react-router'
 import { IoOptions, IoClose, IoChevronBack, IoChevronForward, IoSearch } from 'react-icons/io5'
 import type { Route } from './+types/home'
@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
-import { EditionCard, EditionCardSkeleton } from '~/components/edition-card'
+import { EditionCard } from '~/components/edition-card'
 import { InterestsPicker, PERIOD_LABELS } from '~/components/interests-picker'
 import { fetchEditionsList, categorySlugFromCaderno, parseEditionTags, PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE, type PageSize } from '~/data/api'
 import { getCategory } from '~/data/editions'
@@ -158,11 +158,10 @@ function SearchInput({ q, setFilter }: { q: string; setFilter: (k: string, v: st
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Sync when URL changes externally (e.g. clearFilters)
-  const prevQ = useRef(q)
-  if (prevQ.current !== q && value !== q) {
-    prevQ.current = q
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValue(q)
-  }
+  }, [q])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const v = e.target.value
@@ -562,6 +561,7 @@ export default function Home() {
     <>
       {/* Filter picker (newsletters + period + content categories) */}
       <InterestsPicker
+        key={String(pickerOpen)}
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSave={(interests, tags, period, audience) =>

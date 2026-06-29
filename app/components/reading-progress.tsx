@@ -45,6 +45,7 @@ export function ReadingProgress({ contentRef, onComplete, editionId, slug }: Rea
     if (!loaded) return
     maxRef.current = savedProgress
     completedFiredRef.current = savedCompleted
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPercent(savedProgress)
     setCompleted(savedCompleted)
   }, [loaded, savedProgress, savedCompleted])
