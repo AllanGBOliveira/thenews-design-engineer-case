@@ -1,0 +1,249 @@
+{
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "outOfScope": "خارج النطاق",
+    "readTime": "{{count}} دقيقة قراءة",
+    "a11y": {
+      "nav": "التنقل الرئيسي",
+      "quickActions": "الإجراءات السريعة في الرأس",
+      "goHome": "the news — الذهاب إلى الصفحة الرئيسية",
+      "language": "اللغة: {{lang}}. تغيير اللغة",
+      "selectLanguage": "اختر اللغة",
+      "unread_one": "{{count}} غير مقروءة",
+      "unread_other": "{{count}} غير مقروءة",
+      "closeMenu": "إغلاق القائمة",
+      "moreMenu": "قائمة الميزات",
+      "back": "رجوع"
+    },
+    "nav": {
+      "edition": "الطبعة",
+      "habits": "العادات",
+      "cup": "الكأس",
+      "books": "الكتب",
+      "more": "المزيد",
+      "home": "الرئيسية",
+      "profile": "الملف الشخصي",
+      "editionAria": "الطبعة — اقرأ إصدار اليوم",
+      "habitsAria": "العادات — سلسلة القراءة والتلعيب",
+      "cupAria": "الكأس — توقعات وألعاب الموسم",
+      "booksAria": "الكتب — مكتبتك للقراءة",
+      "moreAria": "المزيد — جميع الميزات"
+    },
+    "header": {
+      "podcasts": "البودكاست",
+      "favorites": "الإعجابات والمفضلة",
+      "messages": "المحادثات والرسائل",
+      "thermometer": "مقياس نزاهة الإصدار",
+      "settings": "إعدادات الحساب"
+    },
+    "more": {
+      "title": "المزيد",
+      "subtitle": "جميع الميزات",
+      "badge": {
+        "new": "جديد",
+        "earnPrizes": "اكسب جوائز"
+      },
+      "sections": {
+        "resources": "الموارد",
+        "account": "الحساب",
+        "contact": "تواصل معنا"
+      },
+      "items": {
+        "notifications":  { "label": "الإشعارات",             "description": "مركز الإشعارات" },
+        "streak":         { "label": "سلسلتي",                "description": "قراءة الإصدار" },
+        "discussions":    { "label": "النقاشات",              "description": "المنتدى والنقاشات اليومية" },
+        "games":          { "label": "الألعاب",               "description": "Palavritas وTeia والمزيد" },
+        "cupitas":        { "label": "Copitas",               "description": "توقع الترتيب والفائزين" },
+        "event":          { "label": "حدث seis&seis",         "description": "اعرف المزيد عن الحدث" },
+        "community":      { "label": "المجتمع",               "description": "التغذية الاجتماعية للكتب" },
+        "search":         { "label": "البحث عن أشخاص",       "description": "ابحث عن قراء بالاسم أو @" },
+        "coupons":        { "label": "الكوبونات",             "description": "خصومات حصرية لك" },
+        "gift":           { "label": "هدية",                  "description": "اكسب مكافآت بالإحالة" },
+        "newsFeed":       { "label": "الأخبار",               "description": "تغذية إخبارية مخصصة" },
+        "pastEditions":   { "label": "الإصدارات السابقة",     "description": "أرشيف النشرات الإخبارية" },
+        "agenda":         { "label": "التقويم",               "description": "تقويم النشرات الإخبارية" },
+        "podcasts":       { "label": "البودكاست",             "description": "مكتبة الحلقات" },
+        "profile":        { "label": "ملفي الشخصي",          "description": "إعدادات الحساب" },
+        "blocked":        { "label": "المستخدمون المحظورون",  "description": "إدارة من حظرته" },
+        "onboarding":     { "label": "إعادة الإعداد",         "description": "إعادة تشغيل الإعداد التفاعلي" },
+        "help":           { "label": "المساعدة",              "description": "مركز الدعم" },
+        "emailContact":   { "label": "البريد الإلكتروني",     "description": "app@thenews.com.br" },
+        "site":           { "label": "موقع The News",         "description": "thenews.com.br" },
+        "instagram":      { "label": "إنستغرام",              "description": "@thenews.cc" }
+      }
+    }
+  },
+  "home": {
+    "title": "الإصدارات",
+    "placeholder": "شاشة الرئيسية / التغذية — قيد التطوير.",
+    "today": "اليوم",
+    "categories": {
+      "all": "الكل",
+      "business": "الأعمال",
+      "tech": "التقنية",
+      "culture": "الثقافة",
+      "world": "العالم",
+      "sports": "الرياضة",
+      "politics": "السياسة",
+      "economy": "الاقتصاد"
+    },
+    "edition": {
+      "readMore": "قراءة الإصدار",
+      "latest": "أحدث إصدار",
+      "previous": "الإصدارات السابقة",
+      "emptyState": "لا توجد إصدارات في هذه الفئة."
+    }
+  },
+  "habits": {
+    "title": "العادات",
+    "placeholder": "شاشة العادات — قيد التطوير.",
+    "stats": {
+      "activeDays": "الأيام النشطة",
+      "perfectDays": "الأيام المثالية",
+      "totalHabits": "إجمالي العادات",
+      "bestHabit": "أفضل عادة",
+      "currentStreak": "السلسلة الحالية",
+      "longestStreak": "أطول سلسلة"
+    },
+    "streak": {
+      "days_one": "يوم واحد",
+      "days_two": "يومان",
+      "days_few": "{{count}} أيام",
+      "days_many": "{{count}} يومًا",
+      "days_other": "{{count}} يوم",
+      "keepGoing": "استمر هكذا!",
+      "startToday": "ابدأ سلسلتك اليوم.",
+      "newRecord": "رقم قياسي جديد!"
+    },
+    "calendar": {
+      "today": "اليوم",
+      "completed": "مكتمل",
+      "missed": "فائت",
+      "pending": "معلق"
+    },
+    "types": {
+      "edition": "إصدار",
+      "exercise": "تمرين",
+      "books": "قراءة",
+      "water": "ماء",
+      "sleep": "نوم",
+      "meditation": "تأمل",
+      "custom": "مخصص"
+    },
+    "actions": {
+      "addHabit": "إضافة عادة",
+      "complete": "إتمام",
+      "skip": "تخطي",
+      "edit": "تعديل",
+      "delete": "حذف"
+    },
+    "emptyState": {
+      "title": "لا توجد عادات بعد",
+      "description": "أضف عادتك الأولى وابدأ رحلتك."
+    }
+  },
+  "settings": {
+    "title": "الملف الشخصي",
+    "sections": {
+      "account": "الحساب"
+    },
+    "rows": {
+      "theme": "المظهر",
+      "language": "اللغة",
+      "vibration": "الاهتزاز",
+      "publicProfile": "الملف الشخصي العام",
+      "shareHabits": "مشاركة جميع العادات",
+      "likedEditions": "الإصدارات المعجب بها",
+      "notificationPrefs": "تفضيلات الإشعارات",
+      "blockedUsers": "المستخدمون المحظورون",
+      "privacy": "سياسة الخصوصية"
+    },
+    "themeDialog": {
+      "title": "مظهر التطبيق",
+      "system": { "label": "تلقائي", "description": "يتبع الجهاز" },
+      "light":  { "label": "فاتح" },
+      "dark":   { "label": "داكن" }
+    },
+    "languageDialog": {
+      "title": "اللغة"
+    },
+    "profile": {
+      "defineUsername": "@تحديد اسم المستخدم",
+      "memberSince": "عضو منذ {{date}}",
+      "addSocials": "إضافة شبكات اجتماعية",
+      "followers": "متابع",
+      "following": "يتابع",
+      "share": "مشاركة الملف الشخصي",
+      "streak": "السلسلة",
+      "editions": "الإصدارات",
+      "bestStreak": "أفضل سلسلة"
+    },
+    "recentActivity": {
+      "title": "النشاط الأخير",
+      "habitComplete": "أتم عادة: {{name}}",
+      "editionRead": "قرأ إصدار {{name}}"
+    },
+    "verification": {
+      "title": "شارة موثق",
+      "subtitle": "أكمل التحديات للحصول على الشارة الزرقاء",
+      "bookReading": "ساعات قراءة الكتب",
+      "editionsRead": "الإصدارات المقروءة",
+      "streakRecord": "أيام السلسلة",
+      "habitsCompleted": "العادات المكتملة",
+      "appOpens": "فتح التطبيق",
+      "inviteFriends": "أصدقاء مدعوون",
+      "totalProgress": "التقدم الإجمالي:",
+      "invite": "دعوة"
+    },
+    "performance": {
+      "title": "أداؤك",
+      "subtitle": "تحقق من أدائك العام",
+      "streak": "السلسلة",
+      "books": "الكتب",
+      "habits": "العادات"
+    },
+    "habitsToday": {
+      "title": "عادات اليوم"
+    },
+    "activityGrid": {
+      "title": "نشاطك",
+      "days_one": "{{count}} يوم من النشاط",
+      "days_other": "{{count}} أيام من النشاط",
+      "less": "أقل",
+      "more": "أكثر"
+    },
+    "bookshelf": {
+      "title_one": "رفي ({{count}})",
+      "title_other": "رفي ({{count}})"
+    },
+    "engagement": {
+      "title": "التفاعل"
+    },
+    "themeValues": {
+      "system": "تلقائي",
+      "light": "فاتح",
+      "dark": "داكن"
+    },
+    "signOut": "تسجيل الخروج",
+    "signOutAria": "تسجيل الخروج من الحساب",
+    "deleteAccount": "حذف حسابي",
+    "deleteAccountAria": "حذف حسابي نهائيًا"
+  },
+  "cup": {
+    "title": "الكأس",
+    "placeholder": "شاشة الكأس — ميزة موسمية، خارج النطاق."
+  },
+  "books": {
+    "title": "الكتب",
+    "placeholder": "شاشة الكتب — خارج النطاق.",
+    "progress": "{{percent}}% مكتمل",
+    "startReading": "ابدأ القراءة",
+    "continueReading": "متابعة القراءة",
+    "finished": "منتهي",
+    "emptyState": {
+      "title": "رفّك فارغ",
+      "description": "استكشف وأضف كتبًا إلى قائمة قراءتك."
+    }
+  }
+}

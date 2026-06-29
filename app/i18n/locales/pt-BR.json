@@ -1,0 +1,246 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Algo deu errado. Tente novamente.",
+    "outOfScope": "Fora do escopo",
+    "readTime": "{{count}} min de leitura",
+    "a11y": {
+      "nav": "Navegação principal",
+      "quickActions": "Ações rápidas do cabeçalho",
+      "goHome": "the news — ir para a página inicial",
+      "language": "Idioma: {{lang}}. Alterar idioma",
+      "selectLanguage": "Selecionar idioma",
+      "unread_one": "{{count}} não lida",
+      "unread_other": "{{count}} não lidas",
+      "closeMenu": "Fechar menu",
+      "moreMenu": "Menu de funcionalidades",
+      "back": "Voltar"
+    },
+    "nav": {
+      "edition": "edição",
+      "habits": "hábitos",
+      "cup": "copa",
+      "books": "livros",
+      "more": "mais",
+      "home": "Início",
+      "profile": "Perfil",
+      "editionAria": "Edição — ler a edição do dia",
+      "habitsAria": "Hábitos — streak e gamificação de leitura",
+      "cupAria": "Copa — bolão e jogos da temporada",
+      "booksAria": "Livros — sua biblioteca de leitura",
+      "moreAria": "Mais — todas as funcionalidades"
+    },
+    "header": {
+      "podcasts": "Podcasts",
+      "favorites": "Curtidas e favoritos",
+      "messages": "Conversas e mensagens",
+      "thermometer": "Termômetro de imparcialidade da edição",
+      "settings": "Configurações da conta"
+    },
+    "more": {
+      "title": "Mais",
+      "subtitle": "Todas as funcionalidades",
+      "badge": {
+        "new": "NOVO",
+        "earnPrizes": "GANHE PRÊMIOS"
+      },
+      "sections": {
+        "resources": "Recursos",
+        "account": "Conta",
+        "contact": "Entre em Contato"
+      },
+      "items": {
+        "notifications":  { "label": "Notificações",       "description": "central de notificações" },
+        "streak":         { "label": "Meu Streak",         "description": "leitura da edição" },
+        "discussions":    { "label": "Discussões",         "description": "fórum e debates do dia" },
+        "games":          { "label": "Jogos",              "description": "Palavritas, Teia e mais" },
+        "cupitas":        { "label": "Copitas",            "description": "palpita classificados e vencedores" },
+        "event":          { "label": "Evento seis&seis",   "description": "saiba mais sobre o evento" },
+        "community":      { "label": "Comunidade",         "description": "feed social de livros" },
+        "search":         { "label": "Buscar pessoas",     "description": "encontre leitores por nome ou @" },
+        "coupons":        { "label": "Cupons",             "description": "descontos exclusivos para você" },
+        "gift":           { "label": "Presente",           "description": "ganhe recompensas indicando" },
+        "newsFeed":       { "label": "Notícias",           "description": "feed personalizado de notícias" },
+        "pastEditions":   { "label": "Edições Anteriores", "description": "histórico de newsletters" },
+        "agenda":         { "label": "Agenda",             "description": "calendário de newsletters" },
+        "podcasts":       { "label": "Podcasts",           "description": "biblioteca de episódios" },
+        "profile":        { "label": "Meu Perfil",         "description": "configurações da conta" },
+        "blocked":        { "label": "Usuários bloqueados","description": "gerenciar quem você bloqueou" },
+        "onboarding":     { "label": "Rever Onboarding",  "description": "replay do onboarding interativo" },
+        "help":           { "label": "Ajuda",              "description": "central de suporte" },
+        "emailContact":   { "label": "E-mail",             "description": "app@thenews.com.br" },
+        "site":           { "label": "Site The News",      "description": "thenews.com.br" },
+        "instagram":      { "label": "Instagram",          "description": "@thenews.cc" }
+      }
+    }
+  },
+  "home": {
+    "title": "Edições",
+    "placeholder": "Tela Home / Feed — em desenvolvimento.",
+    "today": "Hoje",
+    "categories": {
+      "all": "Tudo",
+      "business": "Negócios",
+      "tech": "Tech",
+      "culture": "Cultura",
+      "world": "Mundo",
+      "sports": "Esportes",
+      "politics": "Política",
+      "economy": "Economia"
+    },
+    "edition": {
+      "readMore": "Ler edição",
+      "latest": "Última edição",
+      "previous": "Edições anteriores",
+      "emptyState": "Nenhuma edição encontrada nesta categoria."
+    }
+  },
+  "habits": {
+    "title": "Hábitos",
+    "placeholder": "Tela de Hábitos — em desenvolvimento.",
+    "stats": {
+      "activeDays": "Dias ativos",
+      "perfectDays": "Dias perfeitos",
+      "totalHabits": "Total de hábitos",
+      "bestHabit": "Melhor hábito",
+      "currentStreak": "Sequência atual",
+      "longestStreak": "Melhor sequência"
+    },
+    "streak": {
+      "days_one": "{{count}} dia",
+      "days_other": "{{count}} dias",
+      "keepGoing": "Continue assim!",
+      "startToday": "Comece hoje sua sequência.",
+      "newRecord": "Novo recorde!"
+    },
+    "calendar": {
+      "today": "Hoje",
+      "completed": "Concluído",
+      "missed": "Perdido",
+      "pending": "Pendente"
+    },
+    "types": {
+      "edition": "Edição",
+      "exercise": "Exercício",
+      "books": "Leitura",
+      "water": "Água",
+      "sleep": "Sono",
+      "meditation": "Meditação",
+      "custom": "Personalizado"
+    },
+    "actions": {
+      "addHabit": "Adicionar hábito",
+      "complete": "Concluir",
+      "skip": "Pular",
+      "edit": "Editar",
+      "delete": "Excluir"
+    },
+    "emptyState": {
+      "title": "Nenhum hábito ainda",
+      "description": "Adicione seu primeiro hábito e comece sua jornada."
+    }
+  },
+  "settings": {
+    "title": "Perfil",
+    "sections": {
+      "account": "conta"
+    },
+    "rows": {
+      "theme": "tema",
+      "language": "idioma",
+      "vibration": "vibração",
+      "publicProfile": "perfil público",
+      "shareHabits": "compartilhar todos os hábitos",
+      "likedEditions": "edições curtidas",
+      "notificationPrefs": "preferências de notificação",
+      "blockedUsers": "usuários bloqueados",
+      "privacy": "política de privacidade"
+    },
+    "themeDialog": {
+      "title": "Tema do app",
+      "system": { "label": "Automático", "description": "Acompanha o celular" },
+      "light":  { "label": "Claro" },
+      "dark":   { "label": "Escuro" }
+    },
+    "languageDialog": {
+      "title": "Idioma"
+    },
+    "profile": {
+      "defineUsername": "@definir username",
+      "memberSince": "Membro desde {{date}}",
+      "addSocials": "Adicionar redes sociais",
+      "followers": "seguidores",
+      "following": "seguindo",
+      "share": "Compartilhar perfil",
+      "streak": "sequência",
+      "editions": "edições",
+      "bestStreak": "melhor sequência"
+    },
+    "recentActivity": {
+      "title": "Atividade Recente",
+      "habitComplete": "Completou hábito: {{name}}",
+      "editionRead": "Leu a edição {{name}}"
+    },
+    "verification": {
+      "title": "Selo de Verificado",
+      "subtitle": "Complete os desafios para ganhar o selo azul",
+      "bookReading": "Horas lendo livros",
+      "editionsRead": "Edições lidas",
+      "streakRecord": "Dias de sequência",
+      "habitsCompleted": "Hábitos concluídos",
+      "appOpens": "Aberturas do app",
+      "inviteFriends": "Amigos convidados",
+      "totalProgress": "Progresso total:",
+      "invite": "Convidar"
+    },
+    "performance": {
+      "title": "Sua Performance",
+      "subtitle": "Confira seu desempenho geral",
+      "streak": "Streak",
+      "books": "Livros",
+      "habits": "Hábitos"
+    },
+    "habitsToday": {
+      "title": "Hábitos de Hoje"
+    },
+    "activityGrid": {
+      "title": "Sua Atividade",
+      "days_one": "{{count}} dia de atividade",
+      "days_other": "{{count}} dias de atividade",
+      "less": "menos",
+      "more": "mais"
+    },
+    "bookshelf": {
+      "title_one": "Minha Estante ({{count}})",
+      "title_other": "Minha Estante ({{count}})"
+    },
+    "engagement": {
+      "title": "Engajamento"
+    },
+    "themeValues": {
+      "system": "automático",
+      "light": "claro",
+      "dark": "escuro"
+    },
+    "signOut": "sair da conta",
+    "signOutAria": "Sair da conta",
+    "deleteAccount": "excluir minha conta",
+    "deleteAccountAria": "Excluir minha conta permanentemente"
+  },
+  "cup": {
+    "title": "Copa",
+    "placeholder": "Tela da Copa — funcionalidade de temporada, fora do escopo."
+  },
+  "books": {
+    "title": "Livros",
+    "placeholder": "Tela de Livros — stretch goal, fora do escopo do case.",
+    "progress": "{{percent}}% concluído",
+    "startReading": "Começar a ler",
+    "continueReading": "Continuar lendo",
+    "finished": "Concluído",
+    "emptyState": {
+      "title": "Sua estante está vazia",
+      "description": "Explore e adicione livros à sua lista de leitura."
+    }
+  }
+}

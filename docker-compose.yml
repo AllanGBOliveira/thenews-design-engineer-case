@@ -11,10 +11,17 @@ services:
       - .env
     volumes:
       - .:/app
-    command: sh -c "npm install --loglevel verbose && npm run dev -- --host"
+      # Isolate container node_modules (Alpine/musl) from the host bind mount.
+      # Without this, `npm install` inside the container overwrites the host's
+      # glibc bindings with musl ones, breaking the host's dev tooling.
+      - thenews_node_modules:/app/node_modules
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host"
     networks:
       - app
 
 networks:
   app:
     driver: bridge
+
+volumes:
+  thenews_node_modules:
