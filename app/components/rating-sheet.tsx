@@ -42,6 +42,7 @@ export function RatingSheet({ open, onClose, onSubmit }: RatingSheetProps) {
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
         side="bottom"
+        showCloseButton={false}
         className="bg-chrome-surface border-t border-chrome-divider rounded-t-2xl px-0 pb-8 max-h-[85dvh] overflow-y-auto"
         aria-describedby="rating-desc"
       >
@@ -187,6 +188,7 @@ export function ContinueSheet({ open, onClose, onQuiz }: ContinueSheetProps) {
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
         side="bottom"
+        showCloseButton={false}
         className="bg-chrome-surface border-t border-chrome-divider rounded-t-2xl px-0 pb-8"
         aria-describedby="continue-desc"
       >

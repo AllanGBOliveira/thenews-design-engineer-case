@@ -206,6 +206,7 @@ export function QuizScreen({ quiz, open, onClose }: QuizScreenProps) {
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent
         className="p-0 gap-0 max-w-none w-full h-[100dvh] sm:h-auto sm:max-w-md bg-chrome-bg border-none rounded-none sm:rounded-2xl flex flex-col"
+        showCloseButton={false}
         aria-describedby="quiz-desc"
       >
         {/* Top bar */}
