@@ -55,7 +55,7 @@ function useUrlFilters() {
   const activeInterests = (params.get('interests') ?? '').split(',').filter(Boolean)
   const page = Math.max(1, parseInt(params.get('page') ?? '1', 10) || 1)
 
-  // Filter changes — replace history (don't pollute stack)
+  // Single filter change — replace history (don't pollute stack)
   const setFilter = useCallback(
     (key: string, value: string | undefined) => {
       setParams(
@@ -63,6 +63,25 @@ function useUrlFilters() {
           const next = new URLSearchParams(prev)
           if (value) next.set(key, value)
           else next.delete(key)
+          next.delete('page')
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setParams],
+  )
+
+  // Multiple filter changes in one atomic URL update (avoids race on double setParams)
+  const setFilters = useCallback(
+    (patch: Record<string, string | undefined>) => {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          for (const [key, value] of Object.entries(patch)) {
+            if (value) next.set(key, value)
+            else next.delete(key)
+          }
           next.delete('page')
           return next
         },
@@ -100,7 +119,7 @@ function useUrlFilters() {
 
   const hasClientFilters = activeTags.length > 0 || activeInterests.length > 0
 
-  return { q, sort, activeTags, activeInterests, page, setFilter, goToPage, clearFilters, hasClientFilters }
+  return { q, sort, activeTags, activeInterests, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters }
 }
 
 /* ─── Search input (debounced URL update) ────────────────────────────────── */
@@ -383,7 +402,7 @@ function Pagination({ page, totalPages, onPage }: { page: number; totalPages: nu
 
 export default function Home() {
   const { editions, pagination } = useLoaderData<typeof loader>()
-  const { q, sort, activeTags, activeInterests, page, setFilter, goToPage, clearFilters, hasClientFilters } =
+  const { q, sort, activeTags, activeInterests, page, setFilter, setFilters, goToPage, clearFilters, hasClientFilters } =
     useUrlFilters()
 
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -415,10 +434,12 @@ export default function Home() {
       <InterestsPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSave={(interests, tags) => {
-          setFilter('interests', interests.length ? interests.join(',') : undefined)
-          setFilter('tags', tags.length ? tags.join(',') : undefined)
-        }}
+        onSave={(interests, tags) =>
+          setFilters({
+            interests: interests.length ? interests.join(',') : undefined,
+            tags: tags.length ? tags.join(',') : undefined,
+          })
+        }
         initialInterests={activeInterests}
         initialTags={activeTags}
       />
