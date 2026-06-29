@@ -447,12 +447,16 @@ export default function Home() {
 
   return (
     <>
-      {/* Interests picker */}
+      {/* Filter picker (newsletters + content categories) */}
       <InterestsPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSave={(slugs) => setFilter('interests', slugs.length ? slugs.join(',') : undefined)}
-        initialSlugs={activeInterests}
+        onSave={(interests, tags) => {
+          setFilter('interests', interests.length ? interests.join(',') : undefined)
+          setFilter('tags', tags.length ? tags.join(',') : undefined)
+        }}
+        initialInterests={activeInterests}
+        initialTags={activeTags}
       />
 
       {/* Sticky toolbar */}

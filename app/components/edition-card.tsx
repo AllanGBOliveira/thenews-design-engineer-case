@@ -117,7 +117,7 @@ export function EditionCard({ edition, onTagClick, activeTags = [] }: EditionCar
 
   return (
     <Link
-      to={`/editions/${edition.slug}`}
+      to={`/${edition.slug}`}
       state={{ edition }}
       className="group flex flex-col h-full overflow-hidden rounded-xl border border-chrome-divider bg-chrome-surface hover:border-chrome-muted transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
     >

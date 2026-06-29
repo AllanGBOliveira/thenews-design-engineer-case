@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router'
+import { NavLink, useMatches } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
   IoNewspaper,
@@ -14,12 +14,10 @@ type NavItemDef = {
   labelKey: string
   ariaLabelKey: string
   icon: React.ComponentType<{ size?: number; className?: string }>
-  /** Extra paths that count as "active" for this nav item */
-  activeOn?: string[]
 }
 
 const NAV_CONFIG: NavItemDef[] = [
-  { to: '/', labelKey: 'common.nav.edition', ariaLabelKey: 'common.nav.editionAria', icon: IoNewspaper, activeOn: ['/editions/'] },
+  { to: '/', labelKey: 'common.nav.edition', ariaLabelKey: 'common.nav.editionAria', icon: IoNewspaper },
   { to: '/habits', labelKey: 'common.nav.habits',  ariaLabelKey: 'common.nav.habitsAria',  icon: IoFlame },
   { to: '/cup',    labelKey: 'common.nav.cup',     ariaLabelKey: 'common.nav.cupAria',     icon: IoFootball },
   { to: '/books',  labelKey: 'common.nav.books',   ariaLabelKey: 'common.nav.booksAria',   icon: IoBook },
@@ -31,10 +29,10 @@ function NavItemButton({
   label,
   ariaLabel,
   icon: Icon,
-  activeOn = [],
-}: { to: string; label: string; ariaLabel: string; icon: NavItemDef['icon']; activeOn?: string[] }) {
-  const { pathname } = useLocation()
-  const extraActive = activeOn.some((prefix) => pathname.startsWith(prefix))
+}: { to: string; label: string; ariaLabel: string; icon: NavItemDef['icon'] }) {
+  const matches = useMatches()
+  // Home tab is also active when viewing an edition (/:slug route)
+  const extraActive = to === '/' && matches.some((m) => m.id === 'routes/editions.$slug')
 
   return (
     <NavLink
@@ -93,7 +91,6 @@ export function BottomNav() {
               label={t(item.labelKey)}
               ariaLabel={t(item.ariaLabelKey)}
               icon={item.icon}
-              activeOn={item.activeOn}
             />
           </li>
         ))}
