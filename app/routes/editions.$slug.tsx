@@ -11,6 +11,7 @@ import { Badge } from '~/components/ui/badge'
 import {
   fetchEditionBySlug,
   categorySlugFromCaderno,
+  parseEditionTags,
   type Edition,
 } from '~/data/api'
 import { getCategory, getQuiz } from '~/data/editions'
@@ -37,6 +38,7 @@ function EditionHeader({ edition }: { edition: Edition }) {
   const navigate = useNavigate()
   const catSlug = categorySlugFromCaderno(edition.cadernoId)
   const category = getCategory(catSlug)
+  const tags = parseEditionTags(edition.contentTags)
   const date = edition.publishDate
     ? new Date(edition.publishDate + 'T12:00:00').toLocaleDateString('pt-BR', {
         day: '2-digit', month: 'short', year: 'numeric',
@@ -63,8 +65,9 @@ function EditionHeader({ edition }: { edition: Edition }) {
         <IoArrowBack size={18} aria-hidden="true" />
       </Link>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex-1 min-w-0 space-y-0.5">
+        {/* Newsletter + status badges */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold text-white leading-none"
             style={{ backgroundColor: category?.dotColor ?? '#F97316' }}
@@ -83,8 +86,24 @@ function EditionHeader({ edition }: { edition: Edition }) {
             </Badge>
           )}
         </div>
-        {date && (
-          <p className="text-[12px] text-chrome-muted mt-0.5 truncate">{date}</p>
+
+        {/* Date + content tag chips */}
+        {(date || tags.length > 0) && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {date && (
+              <time dateTime={edition.publishDate ?? undefined} className="text-[11px] text-chrome-muted shrink-0">
+                {date}
+              </time>
+            )}
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-none bg-chrome-divider text-chrome-muted whitespace-nowrap"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         )}
       </div>
 
@@ -165,7 +184,7 @@ export default function EditionDetail() {
   const catSlug = edition ? categorySlugFromCaderno(edition.cadernoId) : 'the-news'
   const category = getCategory(catSlug)
   const hasProgress = category?.hasReadingProgress ?? false
-  const quiz = getQuiz(catSlug) ?? getQuiz('the-news')
+  const quiz = getQuiz(edition?.slug ?? '')
 
   const contentRef = useRef<HTMLElement>(null)
   const [xpVisible, setXpVisible] = useState(false)
@@ -197,15 +216,20 @@ export default function EditionDetail() {
     <>
       <XpToast show={xpVisible} />
 
-      <EditionHeader edition={edition} />
+      {/* Sticky wrapper — keeps back button + reading progress bar glued to the top of
+          the scroll container as a single unit, eliminating any gap between them. */}
+      <div className="sticky top-0 z-10">
+        <EditionHeader edition={edition} />
 
-      {hasProgress && (
-        <ReadingProgress
-          contentRef={contentRef}
-          onComplete={handleReadingComplete}
-          storageKey={edition.id}
-        />
-      )}
+        {hasProgress && (
+          <ReadingProgress
+            contentRef={contentRef}
+            onComplete={handleReadingComplete}
+            editionId={edition.id}
+            slug={edition.slug}
+          />
+        )}
+      </div>
 
       {!hasProgress && quiz && (
         <FloatingQuizButton onClick={() => setQuizOpen(true)} />

@@ -31,14 +31,14 @@ export type QuizQuestion = {
 }
 
 export type Quiz = {
-  categorySlug: string
+  editionSlug: string
   title: string
   questions: QuizQuestion[]
 }
 
 export const QUIZZES: Quiz[] = [
   {
-    categorySlug: 'the-news',
+    editionSlug: 'sunday-s-edition-28-06',
     title: "quiz do dia - sunday's edition (28/06)",
     questions: [
       {
@@ -76,6 +76,6 @@ export function getCategory(slug: string): Category | undefined {
   return CATEGORIES.find((c) => c.slug === slug)
 }
 
-export function getQuiz(slug: string): Quiz | undefined {
-  return QUIZZES.find((q) => q.categorySlug === slug)
+export function getQuiz(editionSlug: string): Quiz | undefined {
+  return QUIZZES.find((q) => q.editionSlug === editionSlug)
 }

@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { IoDocumentText, IoTime, IoChevronUp, IoChevronDown, IoCheckmarkCircle } from 'react-icons/io5'
 import { cn } from '~/lib/utils'
+import { useReadingProgress } from '~/hooks/use-reading-progress'
 
 type ReadingProgressProps = {
   contentRef: React.RefObject<HTMLElement | null>
   onComplete?: () => void
-  storageKey?: string
+  editionId: string
+  slug: string
 }
 
 function formatTime(seconds: number): string {
@@ -23,24 +25,29 @@ function getScrollContainer(el: HTMLElement | null): HTMLElement | null {
   return getScrollContainer(parent)
 }
 
-function loadSavedMax(storageKey: string | undefined): number {
-  if (!storageKey) return 0
-  try {
-    return parseInt(localStorage.getItem(`tnws-progress-${storageKey}`) ?? '0', 10) || 0
-  } catch { return 0 }
-}
+export function ReadingProgress({ contentRef, onComplete, editionId, slug }: ReadingProgressProps) {
+  const { progress: savedProgress, completed: savedCompleted, loaded, update } = useReadingProgress(
+    editionId,
+    slug,
+  )
 
-export function ReadingProgress({ contentRef, onComplete, storageKey }: ReadingProgressProps) {
-  const savedMax = loadSavedMax(storageKey)
+  // maxRef mirrors the hook's internal max — keeps handleScroll free of stale closures
+  const maxRef = useRef(0)
+  const completedFiredRef = useRef(false)
 
-  // maxRef tracks the furthest scroll reached without triggering re-renders
-  const maxRef = useRef(savedMax)
-  const completedRef = useRef(savedMax >= 100)
-
-  const [percent, setPercent] = useState(savedMax)
+  const [percent, setPercent] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [collapsed, setCollapsed] = useState(false)
-  const [completed, setCompleted] = useState(savedMax >= 100)
+  const [completed, setCompleted] = useState(false)
+
+  // Sync display state once IndexedDB resolves
+  useEffect(() => {
+    if (!loaded) return
+    maxRef.current = savedProgress
+    completedFiredRef.current = savedCompleted
+    setPercent(savedProgress)
+    setCompleted(savedCompleted)
+  }, [loaded, savedProgress, savedCompleted])
 
   const handleScroll = useCallback(() => {
     const content = contentRef.current
@@ -54,61 +61,50 @@ export function ReadingProgress({ contentRef, onComplete, storageKey }: ReadingP
 
     const pct = Math.round((Math.min(scrollTop, scrollHeight) / scrollHeight) * 100)
 
-    // Progress only moves forward — scrolling back never reduces the indicator
     if (pct > maxRef.current) {
       maxRef.current = pct
       setPercent(pct)
-
-      if (storageKey) {
-        try { localStorage.setItem(`tnws-progress-${storageKey}`, String(pct)) } catch { /* ignore */ }
-      }
-
-      if (pct >= 100 && !completedRef.current) {
-        completedRef.current = true
-        setCompleted(true)
-        onComplete?.()
-      }
+      update(pct)
     }
-  }, [contentRef, onComplete, storageKey])
+
+    if (pct >= 100 && !completedFiredRef.current) {
+      completedFiredRef.current = true
+      setCompleted(true)
+      onComplete?.()
+    }
+  }, [contentRef, update, onComplete])
 
   useEffect(() => {
     const content = contentRef.current
     const container = content ? getScrollContainer(content) : null
-    const target = container ?? window
+    const target: EventTarget = container ?? window
     target.addEventListener('scroll', handleScroll, { passive: true })
     handleScroll()
     return () => target.removeEventListener('scroll', handleScroll)
   }, [handleScroll])
 
-  /* Reading timer */
   useEffect(() => {
-    const id = setInterval(() => {
-      setElapsed((s) => s + 1)
-    }, 1000)
-
-    const handleVisibility = () => {
-      if (document.hidden) clearInterval(id)
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
-
+    const id = setInterval(() => setElapsed((s) => s + 1), 1000)
+    const onVisibility = () => { if (document.hidden) clearInterval(id) }
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
       clearInterval(id)
-      document.removeEventListener('visibilitychange', handleVisibility)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [])
 
   const dotPosition = `${Math.min(percent, 100)}%`
 
   return (
+    // No `sticky` here — the parent wrapper in editions.$slug.tsx sticks both
+    // the edition header and this bar together as a single unit.
     <div
-      className="sticky z-10 bg-chrome-bg border-b border-chrome-divider"
-      style={{ top: 44 }}
+      className="bg-chrome-bg border-b border-chrome-divider"
       aria-label={`Progresso de leitura: ${percent}%`}
       role="status"
       aria-live="off"
     >
       {collapsed ? (
-        /* Collapsed state — thin track only */
         <div className="flex items-center gap-2 px-4 py-2">
           <div className="relative flex-1 h-1 bg-chrome-divider rounded-full overflow-visible">
             <div
@@ -140,9 +136,7 @@ export function ReadingProgress({ contentRef, onComplete, storageKey }: ReadingP
           </button>
         </div>
       ) : (
-        /* Expanded state */
         <div className="flex items-center gap-2 px-4 py-2">
-          {/* Leitura % */}
           <span className="flex items-center gap-1 shrink-0 text-[12px] text-chrome-muted">
             <IoDocumentText size={14} aria-hidden="true" />
             <span className="font-medium text-chrome-text">Leitura</span>
@@ -151,14 +145,12 @@ export function ReadingProgress({ contentRef, onComplete, storageKey }: ReadingP
 
           <span className="text-chrome-divider text-[12px] shrink-0">|</span>
 
-          {/* Tempo */}
           <span className="flex items-center gap-1 shrink-0 text-[12px] text-chrome-muted">
             <IoTime size={14} aria-hidden="true" />
             <span className="font-medium text-chrome-text">Tempo</span>
             <span className="font-bold text-chrome-text">{formatTime(elapsed)}</span>
           </span>
 
-          {/* Progress track */}
           <div className="relative flex-1 h-1 bg-chrome-divider rounded-full overflow-visible mx-1">
             <div
               className="absolute top-0 left-0 h-1 bg-brand rounded-full transition-all duration-300"
@@ -180,14 +172,11 @@ export function ReadingProgress({ contentRef, onComplete, storageKey }: ReadingP
             )}
           </div>
 
-          {/* Collapse button */}
           <button
             type="button"
             onClick={() => setCollapsed(true)}
             aria-label="Recolher barra de progresso"
-            className={cn(
-              'shrink-0 text-chrome-muted hover:text-chrome-text focus-visible:outline-none',
-            )}
+            className={cn('shrink-0 text-chrome-muted hover:text-chrome-text focus-visible:outline-none')}
           >
             <IoChevronUp size={16} aria-hidden="true" />
           </button>
